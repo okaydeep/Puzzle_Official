@@ -30,7 +30,6 @@ function scene:create( event )
 
     gemStartX = 10
     gemStartY = 100
-    
 end
 
 function scene:show( event )
@@ -84,8 +83,9 @@ end
 
 function gemDrag( event )
     local t = event.target
-    local phase = event.phase
-    tmpX = event.x
+    local phase = event.phase    
+    local touchedGemI
+    local touchedGemJ
 
     if "began" == phase then
         display.getCurrentStage():setFocus( t )
@@ -97,36 +97,113 @@ function gemDrag( event )
         -- Store initial position
         t.x0 = event.x - t.x
         t.y0 = event.y - t.y
+        t.startX = event.x
+        t.startY = event.y                 
 
     elseif t.isFocus then
         if "moved" == phase then
             t.x = event.x - t.x0
-            t.y = event.y - t.y0
+            t.y = event.y - t.y0            
+            local moveX = event.x-t.startX
+            local moveY = event.y-t.startY            
 
-            if math.abs(t.x-t.y) < 10 then
-                if t.x > 0 and t.y < 0 then
-                    print("right-up")
+            if moveX > 0 then
+                -- 第四象限
+                if moveY > 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y
+                        touchedGemJ = t.pos.x+1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x+1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x
+                    end
+                -- 正右
+                elseif moveY == 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y
+                        touchedGemJ = t.pos.x+1
+                    end
+                -- 第一象限
+                elseif moveY < 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y
+                        touchedGemJ = t.pos.x+1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x+1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x
+                    end
                 end
-            
-            -- 右
-            elseif t.x > gemStartX+(t.pos.x+1)*GV.gemWidth then
-                print("right")
+            elseif moveX == 0 then
+                -- 正下
+                if moveY > 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x+1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x-1
+                    end
+                -- 正上
+                elseif moveY < 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x+1) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x+1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x-1
+                    end
+                end
+            elseif moveX < 0 then
+                -- 第三象限
+                if moveY > 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y
+                        touchedGemJ = t.pos.x-1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x-1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y+1, t.pos.x) == true then
+                        touchedGemI = t.pos.y+1
+                        touchedGemJ = t.pos.x
+                    end
+                -- 正左
+                elseif moveY == 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y
+                        touchedGemJ = t.pos.x-1
+                    end
+                -- 第二象限
+                elseif moveY < 0 then
+                    if stageManager:CheckTouch(t.x, t.y, t.pos.y, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y
+                        touchedGemJ = t.pos.x-1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x-1) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x-1
+                    elseif stageManager:CheckTouch(t.x, t.y, t.pos.y-1, t.pos.x) == true then
+                        touchedGemI = t.pos.y-1
+                        touchedGemJ = t.pos.x
+                    end
+                end
+            end
 
-            -- 左
-            elseif t.x < gemStartX+(t.pos.x-1)*GV.gemWidth then
-                print("left")
+            if touchedGemI ~= nil and touchedGemJ ~= nil then
+                print (touchedGemI, touchedGemJ)
+            end
 
-            -- 下
-            elseif t.y > gemStartY+(t.pos.y+1)*GV.gemHeight then
-                print("down")
-
-            -- 上
-            elseif t.y < gemStartY+(t.pos.y+1)*GV.gemHeight then            
-                print("up")
-
-            end            
-
-        elseif "ended" == phase or "cancelled" == phase then            
+        elseif "ended" == phase or "cancelled" == phase then
             display.getCurrentStage():setFocus( nil )
             t.isFocus = false
 
