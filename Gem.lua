@@ -10,6 +10,6 @@ function _:New(object)
 	return object
 end
 
-_.pos = { x=0, y=0 }
+_.stagePos = nil
+_.color = nil
 _.img = nil
-_.color = ""

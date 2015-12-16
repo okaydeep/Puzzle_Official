@@ -15,7 +15,7 @@ _.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", 
 
 _.Color = { "red", "orange", "green", "blue", "purple", "pink" }
 
-_.touchRadius = 20
+_.touchRadius = 40
 
 _.gemWidth = 100
 _.gemHeight = 110
