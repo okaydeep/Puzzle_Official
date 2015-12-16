@@ -61,12 +61,14 @@ function _:GemSwap(aI, aJ, bI, bJ)
 		local tmpData = a
 
 		b.img.x, b.img.y = self.stageToWorldPos(a.stagePos.y, a.stagePos.x)
+		
+		-- a.stagePos = b.stagePos
+		-- a.color = b.color
+		-- a.img = b.img
 
-		a = b
-		b = tmpData
-		tmpData = nil
-
-		-- a.img.x, a.img.y = self.stageToWorldPos(a.stagePos.y, a.stagePos.x)
+		-- b.stagePos = tmpData.stagePos
+		-- b.color = tmpData.color
+		-- b.img = tmpData.img		
 	end
 end
 

@@ -113,9 +113,10 @@ function gemDrag( event )
     elseif t.isFocus then
         if "moved" == phase then
             t.x = event.x - t.x0
-            t.y = event.y - t.y0                        
-            local moveX = event.x-t.startX
-            local moveY = event.y-t.startY            
+            t.y = event.y - t.y0
+            local gX, gY = stageManager.stageToWorldPos(t.pos.y, t.pos.x)
+            local moveX = event.x-gX
+            local moveY = event.y-gY
 
             if moveX ~= 0 or moveY ~= 0 then
                 -- 第四象限
@@ -176,6 +177,10 @@ function gemDrag( event )
                 print (touchedGemI, touchedGemJ, stageManager:GetColor(touchedGemI, touchedGemJ))
 
                 stageManager:GemSwap(t.pos.y, t.pos.x, touchedGemI, touchedGemJ)
+                t.pos.x = touchedGemJ
+                t.pos.y = touchedGemI
+                touchedGemI = nil
+                touchedGemJ = nil
             end
 
             myCircle.x = event.x
