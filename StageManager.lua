@@ -2,6 +2,8 @@
 require( "GlobalManager" )
 local GV = GlobalManager
 
+require( "Gem" )
+
 -- Class sample
 StageManager = { }
 
@@ -57,18 +59,16 @@ end
 function _:GemSwap(aI, aJ, bI, bJ)
 	if self.isValidStagePos(aI, aJ) == true and self.isValidStagePos(bI, bJ) == true then
 		local a = self.stage[aI][aJ]
-		local b = self.stage[bI][bJ]
-		local tmpData = a
-
-		b.img.x, b.img.y = self.stageToWorldPos(a.stagePos.y, a.stagePos.x)
+		local b = self.stage[bI][bJ]		
+		local tmpData = Gem:copyGem(a)
 		
-		-- a.stagePos = b.stagePos
-		-- a.color = b.color
-		-- a.img = b.img
+		print(tmpData.color)
+		print(tmpData.stagePos.x)
 
-		-- b.stagePos = tmpData.stagePos
-		-- b.color = tmpData.color
-		-- b.img = tmpData.img		
+		a = Gem:copyGem(b)
+		b = Gem:copyGem(tmpData)		
+		--b.img.x, b.img.y = self.stageToWorldPos(b.stagePos.y, b.stagePos.x)
+		Gem:removeGem(tmpData)					
 	end
 end
 
@@ -80,6 +80,16 @@ function _.stageToWorldPos( i, j )
 	posY = GV.gemStartY+i*GV.gemHeight
 
 	return posX, posY
+end
+
+-- 實際位置轉成相對位置, x:x位置, y:y位置
+function _.worldToStagePos( x, y )
+	local posI, posJ
+
+	posI = math.round((y-GV.gemStartY)/GV.gemHeight)
+	posJ = math.round((x-GV.gemStartX)/GV.gemWidth)
+
+	return posI, posJ
 end
 
 -- 計算距離(兩點位差), dX:水平差, dY:垂直差
