@@ -1,6 +1,6 @@
 
 require( "GlobalManager" )
-local GV = GlobalManager
+local GM = GlobalManager
 
 require( "Gem" )
 
@@ -44,10 +44,10 @@ function _:CheckTouch(posX, posY, stageI, stageJ)
 	local result = false
 
 	if self.isValidStagePos(stageI, stageJ) == true then
-		local dX = GV.gemStartX+stageJ*GV.gemWidth-posX
-		local dY = GV.gemStartY+stageI*GV.gemWidth-posY
+		local dX = GM.gemStartX+stageJ*GM.gemWidth-posX
+		local dY = GM.gemStartY+stageI*GM.gemWidth-posY
 
-		if self.distance(dX, dY) <= GV.touchRadius then
+		if self.distance(dX, dY) <= GM.touchRadius then
 			result = true
 		end
 	end
@@ -60,13 +60,14 @@ function _:GemSwap(aI, aJ, bI, bJ)
 	if self.isValidStagePos(aI, aJ) == true and self.isValidStagePos(bI, bJ) == true then
 		local a = self.stage[aI][aJ]
 		local b = self.stage[bI][bJ]		
-		local tmpData = Gem:copyGem(a)
+		local tmpData = GM.deepCopy(a)
 		
-		print(tmpData.color)
+		print(tmpData.stagePos.x)
+		a.stagePos.x = "dd"
 		print(tmpData.stagePos.x)
 
-		a = Gem:copyGem(b)
-		b = Gem:copyGem(tmpData)		
+		a = GM.deepCopy(b)
+		b = GM.deepCopy(tmpData)		
 		--b.img.x, b.img.y = self.stageToWorldPos(b.stagePos.y, b.stagePos.x)
 		Gem:removeGem(tmpData)					
 	end
@@ -76,8 +77,8 @@ end
 function _.stageToWorldPos( i, j )
 	local posX, posY
 
-	posX = GV.gemStartX+j*GV.gemWidth
-	posY = GV.gemStartY+i*GV.gemHeight
+	posX = GM.gemStartX+j*GM.gemWidth
+	posY = GM.gemStartY+i*GM.gemHeight
 
 	return posX, posY
 end
@@ -86,8 +87,8 @@ end
 function _.worldToStagePos( x, y )
 	local posI, posJ
 
-	posI = math.round((y-GV.gemStartY)/GV.gemHeight)
-	posJ = math.round((x-GV.gemStartX)/GV.gemWidth)
+	posI = math.round((y-GM.gemStartY)/GM.gemHeight)
+	posJ = math.round((x-GM.gemStartX)/GM.gemWidth)
 
 	return posI, posJ
 end
