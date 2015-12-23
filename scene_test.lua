@@ -78,7 +78,7 @@ timer.performWithDelay( 1000, showMemUsed, -1 )
 local function copyTable()    
     local table = {a=1, b=2, t={c=3, d=4}}
 
-    for i=1, 200 do
+    for i=1, 2000 do
         bigTable[i] = gm.deepCopy(table)
     end
 
@@ -87,21 +87,25 @@ end
 timer.performWithDelay( 3000, copyTable )
 
 local function clearTable()
-    local function clear (t)
-        for k, v in pairs(t) do
-            if (type(v) ~= "table") then
-                t[k] = nil
-            else
-                clear(t[k])
-            end
-        end
-    end
+    -- local function clear (t)
+    --     for k, v in pairs(t) do
+    --         if (type(v) ~= "table") then
+    --             t[k] = nil
+    --         else
+    --             clear(t[k])
+    --         end
+    --     end
+    -- end
 
-    clear(bigTable)
+    -- clear(bigTable)
+
+        
+
+    collectgarbage()
 
     print("Clear Finish!")
 end
---timer.performWithDelay( 5000, clearTable )
+timer.performWithDelay( 5000, clearTable )
 
 ---------------------------------------------------------------------------------
 

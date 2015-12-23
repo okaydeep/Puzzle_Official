@@ -45,7 +45,7 @@ function _:CheckTouch(posX, posY, stageI, stageJ)
 
 	if self.isValidStagePos(stageI, stageJ) == true then
 		local dX = GM.gemStartX+stageJ*GM.gemWidth-posX
-		local dY = GM.gemStartY+stageI*GM.gemWidth-posY
+		local dY = GM.gemStartY+stageI*GM.gemHeight-posY
 
 		if self.distance(dX, dY) <= GM.touchRadius then
 			result = true
@@ -57,19 +57,16 @@ end
 
 -- 碰撞物件互換, aI:a的橫排, aJ:a的縱列, bI:b的橫排, bJ:b的縱列
 function _:GemSwap(aI, aJ, bI, bJ)
-	if self.isValidStagePos(aI, aJ) == true and self.isValidStagePos(bI, bJ) == true then
-		local a = self.stage[aI][aJ]
-		local b = self.stage[bI][bJ]		
-		local tmpData = GM.deepCopy(a)
+	if self.isValidStagePos(aI, aJ) == true and self.isValidStagePos(bI, bJ) == true then		
+		self.stage[bI][bJ].img.x, self.stage[bI][bJ].img.y = self.stageToWorldPos(self.stage[aI][aJ].stagePos.y, self.stage[aI][aJ].stagePos.x)		
 		
-		print(tmpData.stagePos.x)
-		a.stagePos.x = "dd"
-		print(tmpData.stagePos.x)
-
-		a = GM.deepCopy(b)
-		b = GM.deepCopy(tmpData)		
-		--b.img.x, b.img.y = self.stageToWorldPos(b.stagePos.y, b.stagePos.x)
-		Gem:removeGem(tmpData)					
+		self.stage[aI][aJ].color = self.stage[bI][bJ].color
+		self.stage[bI][bJ].color = self.stage[aI][aJ].color
+		
+		local imgA = GM.deepCopy(self.stage[aI][aJ].img)
+		self.stage[aI][aJ].img = nil
+		self.stage[aI][aJ].img = self.stage[bI][bJ].img
+		self.stage[bI][bJ].img = imgA		
 	end
 end
 

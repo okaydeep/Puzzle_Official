@@ -16,6 +16,7 @@ _.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", 
 _.Color = { "red", "orange", "green", "blue", "purple", "pink" }
 
 _.touchRadius = 40
+_.touchAreaCoe = 0.3	-- 觸碰範圍係數, 0.5是預設, 越小越好斜轉
 
 _.gemWidth = 100
 _.gemHeight = 110

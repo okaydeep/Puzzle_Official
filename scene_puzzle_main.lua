@@ -20,6 +20,8 @@ local scene = composer.newScene( sceneName )
 local GM
 local stageManager
 
+local directionArr
+
 local touchedGemI
 local touchedGemJ
 local collidedGemI
@@ -36,6 +38,13 @@ function scene:create( event )
     math.randomseed( os.time() )
     GM = GlobalManager:New(GM)
     stageManager = StageManager:New(stageManager)    
+
+    directionArr = {                        
+        { { 0 , -1 }, { 1, 1 }, { 1, 0 } }, -- 第一象限
+        { { -1, 0 }, { -1, -1 }, { 0 , -1 } }, -- 第二象限
+        { { 0, 1 }, { -1, 1 }, { -1, 0 } }, -- 第三象限
+        { { 1, 0 }, { 1, 1 }, { 0, 1 } } -- 第四象限
+    }
 
     myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
     myCircle.isVisable = false
@@ -131,7 +140,7 @@ function gemDrag( event )
         t.startY = event.y
         touchedGemI, touchedGemJ = stageManager.worldToStagePos(event.x, event.y)
 
-        print (touchedGemI, touchedGemJ, stageManager:GetColor(touchedGemI, touchedGemJ))
+        showGemInfo(touchedGemI, touchedGemJ)        
 
     elseif t.isFocus then
         if "moved" == phase then
@@ -141,67 +150,153 @@ function gemDrag( event )
             local moveX = event.x-gX
             local moveY = event.y-gY
 
-            if moveX ~= 0 or moveY ~= 0 then
-                -- 第四象限
-                if moveX >= 0 and moveY >= 0 then
-                    if stageManager:CheckTouch(t.x, t.y, touchedGemI, touchedGemJ+1) == true then
-                        collidedGemI = touchedGemI
-                        collidedGemJ = touchedGemJ+1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI+1, touchedGemJ+1) == true then
-                        collidedGemI = touchedGemI+1
-                        collidedGemJ = touchedGemJ+1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI+1, touchedGemJ) == true then
-                        collidedGemI = touchedGemI+1
-                        collidedGemJ = touchedGemJ
-                    end
+            -- 水平移動
+            if moveX >= GM.gemWidth*0.5 then
+                --if touchedGemJ >= 6 then collidedGemJ = touchedGemJ return end
 
-                -- 第一象限
-                elseif moveX >= 0 and moveY <= 0 then
-                    if stageManager:CheckTouch(t.x, t.y, touchedGemI, touchedGemJ+1) == true then
-                        collidedGemI = touchedGemI
-                        collidedGemJ = touchedGemJ+1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI-1, touchedGemJ+1) == true then
-                        collidedGemI = touchedGemI-1
-                        collidedGemJ = touchedGemJ+1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI-1, touchedGemJ) == true then
-                        collidedGemI = touchedGemI-1
-                        collidedGemJ = touchedGemJ
-                    end
-
-                -- 第三象限
-                elseif moveX <= 0 and moveY >= 0 then                     
-                    if stageManager:CheckTouch(t.x, t.y, touchedGemI, touchedGemJ-1) == true then
-                        collidedGemI = touchedGemI
-                        collidedGemJ = touchedGemJ-1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI+1, touchedGemJ-1) == true then
+                if moveY >= GM.gemHeight*GM.touchAreaCoe then
+                    if touchedGemI < 5 then
                         collidedGemI = touchedGemI+1
-                        collidedGemJ = touchedGemJ-1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI+1, touchedGemJ) == true then
-                        collidedGemI = touchedGemI+1
-                        collidedGemJ = touchedGemJ
-                    end
-
-                -- 第二象限
-                elseif moveX <= 0 and moveY <= 0 then
-                    if stageManager:CheckTouch(t.x, t.y, touchedGemI, touchedGemJ-1) == true then
+                    else
                         collidedGemI = touchedGemI
-                        collidedGemJ = touchedGemJ-1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI-1, touchedGemJ-1) == true then
+                    end                    
+                elseif moveY < GM.gemHeight*GM.touchAreaCoe and moveY > GM.gemHeight*(-GM.touchAreaCoe) then
+                    collidedGemI = touchedGemI
+                elseif moveY <= GM.gemHeight*(-GM.touchAreaCoe) then
+                    if touchedGemI > 1 then
                         collidedGemI = touchedGemI-1
-                        collidedGemJ = touchedGemJ-1
-                    elseif stageManager:CheckTouch(t.x, t.y, touchedGemI-1, touchedGemJ) == true then
-                        collidedGemI = touchedGemI-1
-                        collidedGemJ = touchedGemJ
-                    end
+                    else
+                        collidedGemI = touchedGemI
+                    end                    
                 end
+
+                collidedGemJ = touchedGemJ+1
+
+            elseif moveX <= GM.gemWidth*(-0.5) then
+                if touchedGemJ <= 1 then collidedGemJ = touchedGemJ return end
+
+                if moveY >= GM.gemHeight*GM.touchAreaCoe then
+                    if touchedGemI < 5 then
+                        collidedGemI = touchedGemI+1
+                    else
+                        collidedGemI = touchedGemI
+                    end                    
+                elseif moveY < GM.gemHeight*GM.touchAreaCoe and moveY > GM.gemHeight*(-GM.touchAreaCoe) then
+                    collidedGemI = touchedGemI
+                elseif moveY <= GM.gemHeight*(-GM.touchAreaCoe) then
+                    if touchedGemI > 1 then
+                        collidedGemI = touchedGemI-1
+                    else
+                        collidedGemI = touchedGemI
+                    end                    
+                end
+
+                collidedGemJ = touchedGemJ-1
+
             end
 
+            -- 垂直移動
+            if moveY >= GM.gemHeight*0.5 then
+                if touchedGemI >= 5 then collidedGemI = touchedGemI return end
+
+                if moveX >= GM.gemWidth*GM.touchAreaCoe then
+                    if touchedGemJ < 6 then
+                        collidedGemJ = touchedGemJ+1
+                    else
+                        collidedGemJ = touchedGemJ
+                    end                    
+                elseif moveX < GM.gemWidth*GM.touchAreaCoe and moveX > GM.gemWidth*(-GM.touchAreaCoe) then
+                    collidedGemJ = touchedGemJ
+                elseif moveX <= GM.gemWidth*(-GM.touchAreaCoe) then
+                    if touchedGemJ > 1 then
+                        collidedGemJ = touchedGemJ-1
+                    else
+                        collidedGemJ = touchedGemJ
+                    end                    
+                end
+
+                collidedGemI = touchedGemI+1
+
+            elseif moveY <= GM.gemHeight*(-0.5) then
+                if touchedGemI <= 1 then collidedGemI = touchedGemI return end
+                
+                if moveX >= GM.gemWidth*GM.touchAreaCoe then
+                    if touchedGemJ < 5 then
+                        collidedGemJ = touchedGemJ+1
+                    else
+                        collidedGemJ = touchedGemJ
+                    end                    
+                elseif moveX < GM.gemWidth*GM.touchAreaCoe and moveX > GM.gemWidth*(-GM.touchAreaCoe) then
+                    collidedGemJ = touchedGemJ
+                elseif moveX <= GM.gemWidth*(-GM.touchAreaCoe) then
+                    if touchedGemJ > 1 then
+                        collidedGemJ = touchedGemJ-1
+                    else
+                        collidedGemJ = touchedGemJ
+                    end                    
+                end
+
+                collidedGemI = touchedGemI-1
+
+            end
+
+            -- if moveX ~= 0 or moveY ~= 0 then                
+            --     -- 第四象限
+            --     if moveX >= 0 and moveY >= 0 then
+            --         for i=1, #directionArr[4] do
+            --             local tmpDir = directionArr[4][i]
+
+            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
+            --                 collidedGemI = touchedGemI+tmpDir[2]
+            --                 collidedGemJ = touchedGemJ+tmpDir[1]
+            --                 break
+            --             end
+            --         end
+
+            --     -- 第一象限
+            --     elseif moveX >= 0 and moveY <= 0 then
+            --         for i=1, #directionArr[1] do
+            --             local tmpDir = directionArr[1][i]
+
+            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
+            --                 collidedGemI = touchedGemI+tmpDir[2]
+            --                 collidedGemJ = touchedGemJ+tmpDir[1]
+            --                 break
+            --             end
+            --         end
+
+            --     -- 第三象限
+            --     elseif moveX <= 0 and moveY >= 0 then                     
+            --         for i=1, #directionArr[3] do
+            --             local tmpDir = directionArr[3][i]
+
+            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
+            --                 collidedGemI = touchedGemI+tmpDir[2]
+            --                 collidedGemJ = touchedGemJ+tmpDir[1]
+            --                 break
+            --             end
+            --         end
+
+            --     -- 第二象限
+            --     elseif moveX <= 0 and moveY <= 0 then
+            --         for i=1, #directionArr[2] do
+            --             local tmpDir = directionArr[2][i]
+
+            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
+            --                 collidedGemI = touchedGemI+tmpDir[2]
+            --                 collidedGemJ = touchedGemJ+tmpDir[1]
+            --                 break
+            --             end
+            --         end
+            --     end
+            -- end
+
             if collidedGemI ~= nil and collidedGemJ ~= nil then
-                stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)
+                stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)                                
                 touchedGemJ = collidedGemJ
                 touchedGemI = collidedGemI
                 collidedGemI = nil
-                collidedGemJ = nil
+                collidedGemJ = nil                
             end
 
             myCircle.x = event.x
@@ -225,6 +320,10 @@ function updateMemUsage()
 
     systemMemUsed.text = "System Memory: " .. string.format("%.00f", memUsed) .. " KB"
     textureMemUsed.text = "Texture Memory: " .. string.format("%.03f", texUsed) .. " MB"
+end
+
+function showGemInfo( gemI, gemJ )
+    print(gemI, gemJ, stageManager.stage[gemI][gemJ].color)
 end
 
 ---------------------------------------------------------------------------------
