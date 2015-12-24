@@ -48,6 +48,16 @@ function scene:show( event )
         print (table2["value"])
         print (table2[1])
 
+        local t1 = {a=1, b=2, tt={ta=3, tb=4}, img}
+        local t2 = {a=10, b=20, tt={ta=30, tb=40}, img}
+        local copyT = gm.deepCopy(t1)
+
+        print(copyT.tt.ta)
+
+        copyT = gm.deepCopy(t2)
+
+        print(copyT.tt.ta)
+
     elseif phase == "did" then
                
     end 
@@ -73,7 +83,7 @@ end
 local function showMemUsed()
     print("System Memory: " .. string.format("%.00f", collectgarbage("count")) .. " KB")
 end
-timer.performWithDelay( 1000, showMemUsed, -1 )
+--timer.performWithDelay( 1000, showMemUsed, -1 )
 
 local function copyTable()    
     local table = {a=1, b=2, t={c=3, d=4}}
@@ -84,7 +94,7 @@ local function copyTable()
 
     print("Copy Finish!")
 end
-timer.performWithDelay( 3000, copyTable )
+--timer.performWithDelay( 3000, copyTable )
 
 local function clearTable()
     -- local function clear (t)
@@ -105,7 +115,7 @@ local function clearTable()
 
     print("Clear Finish!")
 end
-timer.performWithDelay( 5000, clearTable )
+--timer.performWithDelay( 5000, clearTable )
 
 ---------------------------------------------------------------------------------
 

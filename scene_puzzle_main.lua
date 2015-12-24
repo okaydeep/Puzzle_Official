@@ -39,15 +39,9 @@ function scene:create( event )
     GM = GlobalManager:New(GM)
     stageManager = StageManager:New(stageManager)    
 
-    directionArr = {                        
-        { { 0 , -1 }, { 1, 1 }, { 1, 0 } }, -- 第一象限
-        { { -1, 0 }, { -1, -1 }, { 0 , -1 } }, -- 第二象限
-        { { 0, 1 }, { -1, 1 }, { -1, 0 } }, -- 第三象限
-        { { 1, 0 }, { 1, 1 }, { 0, 1 } } -- 第四象限
-    }
-
     myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
     myCircle.isVisable = false
+
 end
 
 function scene:show( event )
@@ -55,22 +49,10 @@ function scene:show( event )
     local phase = event.phase    
 
     if phase == "will" then
-        for i=1, 6 do
-            for j=1, 5 do
-                local gem = Gem:New(gem)
-                local randColor = math.random(1, 6)
-                gem.stagePos = {x=i, y=j}                
-                gem.color = GM.Color[randColor]
-                local posX, posY = stageManager.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
-                gem.img = display.newImage( sceneGroup, GM.SpritePath..GM.GemName[randColor], posX, posY )
-                gem.img:addEventListener("touch", gemDrag)                
-                stageManager:AddGemToStage(j, i, gem)
+        -- 產生盤面        
+        stageManager:GenerateGems(sceneGroup, GM.Color, true, gemDrag)        
 
-                -- test
-                local circle = display.newCircle( posX, posY, GM.touchRadius*0.5 )
-            end
-        end
-
+        -- 初始化監看消耗記憶體的文字
         local options = 
         {
             text = "",
@@ -122,6 +104,7 @@ end
 --
 ---------------------------------------------------------------------------------
 
+-- 每顆gem的觸控事件
 function gemDrag( event )
     local t = event.target
     local phase = event.phase        
@@ -140,7 +123,11 @@ function gemDrag( event )
         t.startY = event.y
         touchedGemI, touchedGemJ = stageManager.worldToStagePos(event.x, event.y)
 
-        showGemInfo(touchedGemI, touchedGemJ)        
+        showGemInfo(touchedGemI, touchedGemJ)
+
+        if stageManager:CheckConnected(touchedGemI, touchedGemJ) == true then
+            print("haha")
+        end
 
     elseif t.isFocus then
         if "moved" == phase then
@@ -152,7 +139,7 @@ function gemDrag( event )
 
             -- 水平移動
             if moveX >= GM.gemWidth*0.5 then
-                --if touchedGemJ >= 6 then collidedGemJ = touchedGemJ return end
+                if touchedGemJ >= 6 then collidedGemJ = touchedGemJ return end
 
                 if moveY >= GM.gemHeight*GM.touchAreaCoe then
                     if touchedGemI < 5 then
@@ -238,61 +225,11 @@ function gemDrag( event )
 
                 collidedGemI = touchedGemI-1
 
-            end
+            end          
 
-            -- if moveX ~= 0 or moveY ~= 0 then                
-            --     -- 第四象限
-            --     if moveX >= 0 and moveY >= 0 then
-            --         for i=1, #directionArr[4] do
-            --             local tmpDir = directionArr[4][i]
-
-            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
-            --                 collidedGemI = touchedGemI+tmpDir[2]
-            --                 collidedGemJ = touchedGemJ+tmpDir[1]
-            --                 break
-            --             end
-            --         end
-
-            --     -- 第一象限
-            --     elseif moveX >= 0 and moveY <= 0 then
-            --         for i=1, #directionArr[1] do
-            --             local tmpDir = directionArr[1][i]
-
-            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
-            --                 collidedGemI = touchedGemI+tmpDir[2]
-            --                 collidedGemJ = touchedGemJ+tmpDir[1]
-            --                 break
-            --             end
-            --         end
-
-            --     -- 第三象限
-            --     elseif moveX <= 0 and moveY >= 0 then                     
-            --         for i=1, #directionArr[3] do
-            --             local tmpDir = directionArr[3][i]
-
-            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
-            --                 collidedGemI = touchedGemI+tmpDir[2]
-            --                 collidedGemJ = touchedGemJ+tmpDir[1]
-            --                 break
-            --             end
-            --         end
-
-            --     -- 第二象限
-            --     elseif moveX <= 0 and moveY <= 0 then
-            --         for i=1, #directionArr[2] do
-            --             local tmpDir = directionArr[2][i]
-
-            --             if stageManager:CheckTouch(t.x, t.y, touchedGemI+tmpDir[2], touchedGemJ+tmpDir[1]) == true then
-            --                 collidedGemI = touchedGemI+tmpDir[2]
-            --                 collidedGemJ = touchedGemJ+tmpDir[1]
-            --                 break
-            --             end
-            --         end
-            --     end
-            -- end
-
-            if collidedGemI ~= nil and collidedGemJ ~= nil then
-                stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)                                
+            -- 如果有觸碰到其它gem
+            if collidedGemI ~= nil and collidedGemJ ~= nil then                
+                stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)
                 touchedGemJ = collidedGemJ
                 touchedGemI = collidedGemI
                 collidedGemI = nil
@@ -314,6 +251,7 @@ function gemDrag( event )
     return true
 end
 
+-- 更新消耗記憶體
 function updateMemUsage()
     local memUsed = (collectgarbage("count"))
     local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576
@@ -322,8 +260,9 @@ function updateMemUsage()
     textureMemUsed.text = "Texture Memory: " .. string.format("%.03f", texUsed) .. " MB"
 end
 
+-- 顯示gem資訊 (水平, 垂直, 顏色)
 function showGemInfo( gemI, gemJ )
-    print(gemI, gemJ, stageManager.stage[gemI][gemJ].color)
+    print(stageManager.stage[gemI][gemJ].stagePos.y, stageManager.stage[gemI][gemJ].stagePos.x, stageManager.stage[gemI][gemJ].color)
 end
 
 ---------------------------------------------------------------------------------
