@@ -56,23 +56,13 @@ function _:CheckTouch( posX, posY, stageI, stageJ )
 end
 
 -- 檢查是否連線, stageI:橫排, stageJ:縱列
-function _:CheckConnected( stageI, stageJ )
-	local result = false
-	local connectedAmount = 1	
-	local idx = 1
-	local dir {"right", "left", "down", "up"}
-
-	-- TODO
-	local function checkByDir(dirIdx)
-		idx = 1
-		local checkPos
-
-		if dirIdx <= 2 then
-
-		end
-	end
-
+function _:CheckConnected( stageI, stageJ )	
+	local idx
+	local connectedAmount	
+	
 	-- 檢查右方連線
+	idx = 1
+	connectedAmount = 1
 	while stageJ+idx<=6 do
 		if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+idx].color then
 			connectedAmount = connectedAmount+1
@@ -81,47 +71,60 @@ function _:CheckConnected( stageI, stageJ )
 			break
 		end
 	end
-	
+	print( connectedAmount )
+	if connectedAmount >= 3 then		
+		return true
+	end
+
 	-- 檢查左方連線
 	idx = -1
+	connectedAmount = 1
 	while stageJ+idx>=1 do
 		if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+idx].color then
-			vConnectedAmount = vConnectedAmount+1
+			connectedAmount = connectedAmount+1
 			idx = idx-1
 		else
 			break
 		end
 	end
+	print( connectedAmount )
+	if connectedAmount >= 3 then		
+		return true
+	end
 
 	-- 檢查下方連線
 	idx = 1
+	connectedAmount = 1
 	while stageI+idx<=5 do
 		if self.stage[stageI][stageJ].color == self.stage[stageI+idx][stageJ].color then
-			hConnectedAmount = hConnectedAmount+1
+			connectedAmount = connectedAmount+1
 			idx = idx+1
 		else
 			break
 		end
 	end
+	print( connectedAmount )
+	if connectedAmount >= 3 then		
+		return true
+	end
 
 	-- 檢查上方連線
 	idx = -1
+	connectedAmount = 1
 	while stageI+idx>=1 do
 		if self.stage[stageI][stageJ].color == self.stage[stageI+idx][stageJ].color then
-			hConnectedAmount = hConnectedAmount+1
+			connectedAmount = connectedAmount+1
 			idx = idx-1
 		else
 			break
 		end
 	end
+	print( connectedAmount )
+	if connectedAmount >= 3 then		
+		return true
+	end	
 
-	print(hConnectedAmount, vConnectedAmount)
-
-	if hConnectedAmount >= 3 or vConnectedAmount >= 3 then
-		result = true
-	end
-
-	return result
+	return false
 end
 
 -- 碰撞物件互換, aI:a的橫排, aJ:a的縱列, bI:b的橫排, bJ:b的縱列
