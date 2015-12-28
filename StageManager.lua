@@ -71,7 +71,7 @@ function _:CheckConnected( stageI, stageJ )
 			break
 		end
 	end
-	print( connectedAmount )
+	
 	if connectedAmount >= 3 then		
 		return true
 	end
@@ -87,7 +87,7 @@ function _:CheckConnected( stageI, stageJ )
 			break
 		end
 	end
-	print( connectedAmount )
+	
 	if connectedAmount >= 3 then		
 		return true
 	end
@@ -103,7 +103,7 @@ function _:CheckConnected( stageI, stageJ )
 			break
 		end
 	end
-	print( connectedAmount )
+	
 	if connectedAmount >= 3 then		
 		return true
 	end
@@ -119,7 +119,7 @@ function _:CheckConnected( stageI, stageJ )
 			break
 		end
 	end
-	print( connectedAmount )
+	
 	if connectedAmount >= 3 then		
 		return true
 	end	
@@ -184,17 +184,20 @@ function _:GenerateGems( displayGroup, colorArr, connectionAllowed, touchEvt )
     		local tmpColor = { }
 
     		if self:CheckConnected(pos[2], pos[1]) == true then
-	    		for i=1, #colorArr do
-	    			if self.stage[pos[2]][pos[1]].color ~= colorArr[i] then
-	    				tmpColor[i] = colorArr[i]
-	    			end
-	    		end
+    			local colorIdx = 1
 
-	    		for i=#tmpColor, 1, -1 do
-	    			local rand = math.random(1, i-1 )
+	    		for j=1, #colorArr do
+	    			if self.stage[pos[2]][pos[1]].color ~= colorArr[j] then
+	    				tmpColor[colorIdx] = colorArr[j]
+	    				colorIdx = colorIdx+1
+	    			end
+	    		end	    		
+
+	    		for j=#tmpColor, 1, -1 do	    			
+	    			local rand = math.random(1, j)
 	    			local tmpC = tmpColor[rand]
-	    			tmpColor[rand] = tmpColor[i]
-	    			tmpColor[i] = tmpC
+	    			tmpColor[rand] = tmpColor[j]
+	    			tmpColor[j] = tmpC
 	    		end
 
 	    		while self:CheckConnected(pos[2], pos[1]) == true do

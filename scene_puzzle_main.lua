@@ -49,8 +49,9 @@ function scene:show( event )
     local phase = event.phase    
 
     if phase == "will" then
-        -- 產生盤面        
-        stageManager:GenerateGems(sceneGroup, GM.Color, true, gemDrag)        
+        -- 產生盤面
+        local tmpColor = {"red", "green"}
+        stageManager:GenerateGems(sceneGroup, GM.Color, false, gemDrag)        
 
         -- 初始化監看消耗記憶體的文字
         local options = 
