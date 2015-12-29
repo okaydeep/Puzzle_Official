@@ -147,8 +147,8 @@ function _:GemSwap( aI, aJ, bI, bJ )
 	end
 end
 
--- 產生盤面, colorArr:盤面會出現的顏色陣列, connectionAllowed:允許預設連線
-function _:GenerateGems( displayGroup, colorArr, connectionAllowed, touchEvt )
+-- 產生盤面, colorIdxArr:盤面會出現的顏色引數陣列, connectionAllowed:允許預設連線
+function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	local posTable = { }
 	local idx = 1
 
@@ -161,11 +161,11 @@ function _:GenerateGems( displayGroup, colorArr, connectionAllowed, touchEvt )
 
     for i=1, #posTable do
 		local gem = Gem:New(gem)
-    	local randColor = math.random(1, #colorArr)
+    	local rand = math.random(1, #colorIdxArr)
 	    gem.stagePos = {x=posTable[i][1], y=posTable[i][2]}
-	    gem.color = colorArr[randColor]
+	    gem.color = GM.Color[colorIdxArr[rand]]
 	    local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
-	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[randColor], posX, posY )
+	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[rand], posX, posY )
 
 	    if touchEvt ~= nil then
 	    	gem.img:addEventListener("touch", touchEvt)
@@ -177,39 +177,56 @@ function _:GenerateGems( displayGroup, colorArr, connectionAllowed, touchEvt )
 	    local circle = display.newCircle( posX, posY, GM.touchRadius*0.5 )
     end
 
-    if connectionAllowed == false then
+    -- 確認盤面是否有連結
+    local function checkAllGems()
     	for i=1, #posTable do
     		local idx = 1
     		local pos = posTable[i]
-    		local tmpColor = { }
+    		local tmpIdxArr = { }
 
     		if self:CheckConnected(pos[2], pos[1]) == true then
     			local colorIdx = 1
 
-	    		for j=1, #colorArr do
-	    			if self.stage[pos[2]][pos[1]].color ~= colorArr[j] then
-	    				tmpColor[colorIdx] = colorArr[j]
+    			-- 找出不相同的顏色引數並記錄
+	    		for j=1, #colorIdxArr do
+	    			if self.stage[pos[2]][pos[1]].color ~= GM.Color[colorIdxArr[j]] then
+	    				tmpIdxArr[colorIdx] = colorIdxArr[j]
 	    				colorIdx = colorIdx+1
 	    			end
 	    		end	    		
 
-	    		for j=#tmpColor, 1, -1 do	    			
+	    		-- 使用洗牌法打亂顏色引數
+	    		for j=#tmpIdxArr, 1, -1 do	    			
 	    			local rand = math.random(1, j)
-	    			local tmpC = tmpColor[rand]
-	    			tmpColor[rand] = tmpColor[j]
-	    			tmpColor[j] = tmpC
+	    			local tmpIdx = tmpIdxArr[rand]
+	    			tmpIdxArr[rand] = tmpIdxArr[j]
+	    			tmpIdxArr[j] = tmpIdx
 	    		end
 
+	    		-- 將剛剛的顏色引數帶入並確認未連結
 	    		while self:CheckConnected(pos[2], pos[1]) == true do
-	    			if idx > #tmpColor then
+	    			if idx > #tmpIdxArr then
 	    				break
 	    			end
 
-	    			self.stage[pos[2]][pos[1]].color = tmpColor[idx]
+	    			self.stage[pos[2]][pos[1]].color = GM.Color[tmpIdxArr[idx]]
+
+	    			if self:CheckConnected(pos[2], pos[1]) == false then
+		    			self.stage[pos[2]][pos[1]].img:removeSelf()
+		    			self.stage[pos[2]][pos[1]].img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[tmpIdxArr[idx]], posX, posY )
+		    			break
+		    		end
+
 	    			idx = idx+1
 	    		end
 	    	end
     	end
+    end
+
+    if connectionAllowed == false then
+    	--for k=1, #posTable do
+    		checkAllGems()
+    	--end
     end
 
 end
