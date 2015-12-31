@@ -127,6 +127,18 @@ function _:CheckConnected( stageI, stageJ )
 	return false
 end
 
+-- 取得(若有)連線gem的座標(若無則返回空table), stageI:橫排, stageJ:縱列
+function _:GetConnectedGemsPos( stageI, stageJ )
+	local gemsPos = { }
+
+	if self:CheckConnected(stageI, stageJ) == false then
+		return gemsPos
+	end
+
+
+
+end
+
 -- 碰撞物件互換, aI:a的橫排, aJ:a的縱列, bI:b的橫排, bJ:b的縱列
 function _:GemSwap( aI, aJ, bI, bJ )		
 	if self.isValidStagePos(aI, aJ) == true and self.isValidStagePos(bI, bJ) == true then
@@ -151,6 +163,7 @@ end
 function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	local posTable = { }
 	local idx = 1
+	local connected = false
 
 	for i=1, 5 do
         for j=1, 6 do
@@ -165,7 +178,7 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
 	    gem.stagePos = {x=posTable[i][1], y=posTable[i][2]}
 	    gem.color = GM.Color[colorIdxArr[rand]]
 	    local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
-	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[rand], posX, posY )
+	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[colorIdxArr[rand]], posX, posY )
 
 	    if touchEvt ~= nil then
 	    	gem.img:addEventListener("touch", touchEvt)
@@ -189,10 +202,10 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
 
     			-- 找出不相同的顏色引數並記錄
 	    		for j=1, #colorIdxArr do
-	    			if self.stage[pos[2]][pos[1]].color ~= GM.Color[colorIdxArr[j]] then
+	    			--if self.stage[pos[2]][pos[1]].color ~= GM.Color[colorIdxArr[j]] then
 	    				tmpIdxArr[colorIdx] = colorIdxArr[j]
 	    				colorIdx = colorIdx+1
-	    			end
+	    			--end
 	    		end	    		
 
 	    		-- 使用洗牌法打亂顏色引數
@@ -206,14 +219,19 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
 	    		-- 將剛剛的顏色引數帶入並確認未連結
 	    		while self:CheckConnected(pos[2], pos[1]) == true do
 	    			if idx > #tmpIdxArr then
+	    				local connected = true
 	    				break
 	    			end
 
 	    			self.stage[pos[2]][pos[1]].color = GM.Color[tmpIdxArr[idx]]
+    				local posX, posY = self.stageToWorldPos(pos[2], pos[1])
+	    			self.stage[pos[2]][pos[1]].img:removeSelf()
+	    			self.stage[pos[2]][pos[1]].img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[tmpIdxArr[idx]], posX, posY )
+	    			if touchEvt ~= nil then
+				    	self.stage[pos[2]][pos[1]].img:addEventListener("touch", touchEvt)
+				    end
 
-	    			if self:CheckConnected(pos[2], pos[1]) == false then
-		    			self.stage[pos[2]][pos[1]].img:removeSelf()
-		    			self.stage[pos[2]][pos[1]].img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[tmpIdxArr[idx]], posX, posY )
+	    			if self:CheckConnected(pos[2], pos[1]) == false then	    				
 		    			break
 		    		end
 
@@ -224,9 +242,16 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
     end
 
     if connectionAllowed == false then
-    	--for k=1, #posTable do
+    	local checkTimes = 0
+
+    	repeat
     		checkAllGems()
-    	--end
+    		checkTimes = checkTimes+1
+
+    		if checkTimes >= 5 then
+    			break
+    		end    		
+    	until(connected == false)
     end
 
 end

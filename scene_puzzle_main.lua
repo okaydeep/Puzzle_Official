@@ -50,7 +50,7 @@ function scene:show( event )
 
     if phase == "will" then
         -- 產生盤面
-        local colorIdxArr = {1, 3, 4, 5, 6}
+        local colorIdxArr = {1, 2, 3}
         stageManager:GenerateGems(sceneGroup, colorIdxArr, false, gemDrag)
 
         -- 初始化監看消耗記憶體的文字
