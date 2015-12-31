@@ -128,14 +128,76 @@ function _:CheckConnected( stageI, stageJ )
 end
 
 -- 取得(若有)連線gem的座標(若無則返回空table), stageI:橫排, stageJ:縱列
-function _:GetConnectedGemsPos( stageI, stageJ )
-	local gemsPos = { }
+function _:GetConnectedGemPos( stageI, stageJ )
+	local gemPos = { }
 
 	if self:CheckConnected(stageI, stageJ) == false then
-		return gemsPos
+		return gemPos
 	end
 
+	local function getDirConnectedGemPos(stageI, stageJ, dir)
+		local connPos = {{stageJ, stageI}}
+		local hDirLimit
+		local vDirLimit
+		local posXOffset
+		local posYOffset
+		local posXDelta
+		local posYDelta
 
+		if dir == "right" then
+			hDirLimit = 6
+			vDirLimit = 0
+			posXOffset = 1
+			posYOffset = 0
+
+		elseif dir == "left" then
+			hDirLimit = 0
+			vDirLimit = 0
+			posXOffset = -1
+			posYOffset = 0
+
+		elseif dir == "down" then
+			hDirLimit = 0
+			vDirLimit = 5
+			posXOffset = 0
+			posYOffset = 1
+
+		elseif dir == "up" then
+			hDirLimit = 0
+			vDirLimit = 0
+			posXOffset = 0
+			posYOffset = -1
+
+		end
+
+		posXDelta = posXOffset
+		posYDelta = posYOffset
+
+		while posXDelta ~= hDirLimit and posYDelta ~= vDirLimit do
+			if self.stage[stageI][stageJ].color == self.stage[stageI+posYDelta][stageJ+posXDelta] then				
+				connPos[#connPos] = {stageJ+posXDelta, stageI+posYDelta}
+			else
+				break
+			end
+
+			posXDelta = posXDelta+posXOffset
+			posYDelta = posYDelta+posYOffset
+		end
+
+		for i=1, #connPos do
+			if dir == "right" or dir == "left" then
+				self.stage[connPos[i][2]][connPos[i][1]].CheckHConnected = true
+			if dir == "down" or dir == "up" then
+				self.stage[connPos[i][2]][connPos[i][1]].CheckVConnected = true
+			end
+		end
+
+		if #connPos >= 3 then
+			return connPos
+		else
+			return { }
+		end
+	end
 
 end
 
@@ -160,7 +222,7 @@ function _:GemSwap( aI, aJ, bI, bJ )
 end
 
 -- 產生盤面, colorIdxArr:盤面會出現的顏色引數陣列, connectionAllowed:允許預設連線
-function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
+function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	local posTable = { }
 	local idx = 1
 	local connected = false
@@ -177,6 +239,8 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
     	local rand = math.random(1, #colorIdxArr)
 	    gem.stagePos = {x=posTable[i][1], y=posTable[i][2]}
 	    gem.color = GM.Color[colorIdxArr[rand]]
+	    gem.CheckHConnected = false
+	    gem.CheckVConnected = false
 	    local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
 	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[colorIdxArr[rand]], posX, posY )
 
@@ -191,7 +255,7 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
     end
 
     -- 確認盤面是否有連結
-    local function checkAllGems()
+    local function checkAllGem()
     	for i=1, #posTable do
     		local idx = 1
     		local pos = posTable[i]
@@ -245,7 +309,7 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
     	local checkTimes = 0
 
     	repeat
-    		checkAllGems()
+    		checkAllGem()
     		checkTimes = checkTimes+1
 
     		if checkTimes >= 5 then
@@ -253,6 +317,11 @@ function _:GenerateGems( displayGroup, colorIdxArr, connectionAllowed, touchEvt 
     		end    		
     	until(connected == false)
     end
+
+end
+
+-- 消除盤面中有連線的gem
+function _:EliminateGem()
 
 end
 

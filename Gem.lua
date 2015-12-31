@@ -12,4 +12,6 @@ end
 
 _.stagePos = nil
 _.color = nil
+_.checkHConnected = nil
+_.checkVConnected = nil
 _.img = nil
