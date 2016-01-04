@@ -50,8 +50,8 @@ function scene:show( event )
 
     if phase == "will" then
         -- 產生盤面
-        local colorIdxArr = {1, 2, 3}
-        stageManager:GenerateGems(sceneGroup, colorIdxArr, false, gemDrag)
+        local colorIdxArr = {1, 2}
+        stageManager:GenerateGem(sceneGroup, colorIdxArr, true, gemDrag)
 
         -- 初始化監看消耗記憶體的文字
         local options = 
@@ -124,10 +124,17 @@ function gemDrag( event )
         t.startY = event.y
         touchedGemI, touchedGemJ = stageManager.worldToStagePos(event.x, event.y)
 
-        showGemInfo(touchedGemI, touchedGemJ)
+        --showGemInfo(touchedGemI, touchedGemJ)
 
         if stageManager:CheckConnected(touchedGemI, touchedGemJ) == true then
-            print("haha")
+            local posT = stageManager:GetConnectedGemPos(touchedGemI, touchedGemJ)            
+            print(#posT)
+
+            if #posT > 0 then
+                for i, v in ipairs(table) do
+                    print(i .. v[1] .. ", " .. v[2])
+                end
+            end
         end
 
     elseif t.isFocus then
@@ -245,6 +252,8 @@ function gemDrag( event )
             t.isFocus = false
 
             t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)
+
+            stageManager:EliminateGem()
         end
     end
 

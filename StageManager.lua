@@ -60,6 +60,7 @@ function _:CheckConnected( stageI, stageJ )
 	local idx
 	local connectedAmount	
 	
+	-- 水平連線檢查
 	-- 檢查右方連線
 	idx = 1
 	connectedAmount = 1
@@ -70,20 +71,27 @@ function _:CheckConnected( stageI, stageJ )
 		else			
 			break
 		end
+
+		if connectedAmount >= 3 then
+			break
+		end
 	end
 	
-	if connectedAmount >= 3 then		
+	if connectedAmount >= 3 then
 		return true
 	end
 
 	-- 檢查左方連線
-	idx = -1
-	connectedAmount = 1
+	idx = -1	
 	while stageJ+idx>=1 do
 		if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+idx].color then
 			connectedAmount = connectedAmount+1
 			idx = idx-1
 		else
+			break
+		end
+
+		if connectedAmount >= 3 then
 			break
 		end
 	end
@@ -92,6 +100,7 @@ function _:CheckConnected( stageI, stageJ )
 		return true
 	end
 
+	-- 垂直連線檢查
 	-- 檢查下方連線
 	idx = 1
 	connectedAmount = 1
@@ -102,6 +111,10 @@ function _:CheckConnected( stageI, stageJ )
 		else
 			break
 		end
+
+		if connectedAmount >= 3 then
+			break
+		end
 	end
 	
 	if connectedAmount >= 3 then		
@@ -109,13 +122,16 @@ function _:CheckConnected( stageI, stageJ )
 	end
 
 	-- 檢查上方連線
-	idx = -1
-	connectedAmount = 1
+	idx = -1	
 	while stageI+idx>=1 do
 		if self.stage[stageI][stageJ].color == self.stage[stageI+idx][stageJ].color then
 			connectedAmount = connectedAmount+1
 			idx = idx-1
 		else
+			break
+		end
+
+		if connectedAmount >= 3 then
 			break
 		end
 	end
@@ -135,70 +151,134 @@ function _:GetConnectedGemPos( stageI, stageJ )
 		return gemPos
 	end
 
+	-- 取得從單個gem起始的連線座標
 	local function getDirConnectedGemPos(stageI, stageJ, dir)
-		local connPos = {{stageJ, stageI}}
+		local connPos = { }
 		local hDirLimit
 		local vDirLimit
 		local posXOffset
 		local posYOffset
 		local posXDelta
-		local posYDelta
+		local posYDelta		
 
-		if dir == "right" then
+		if dir == "horizon" then
 			hDirLimit = 6
-			vDirLimit = 0
 			posXOffset = 1
-			posYOffset = 0
+			posXDelta = 1
 
-		elseif dir == "left" then
-			hDirLimit = 0
-			vDirLimit = 0
+			while stageJ+posXDelta <= hDirLimit do
+				if self.stage[stageI][stageJ+posXDelta].checkHConnected == true then break end
+
+				if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+posXDelta].color then
+					connPos[#connPos+1] = {stageJ+posXDelta, stageI}
+				else
+					break
+				end
+
+				posXDelta = posXDelta+posXOffset				
+			end
+
+			hDirLimit = 1
 			posXOffset = -1
-			posYOffset = 0
+			posXDelta = -1
 
-		elseif dir == "down" then
-			hDirLimit = 0
+			while stageJ+posXDelta >= hDirLimit do
+				if self.stage[stageI][stageJ+posXDelta].checkHConnected == true then break end
+
+				if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+posXDelta].color then
+					connPos[#connPos+1] = {stageJ+posXDelta, stageI}
+				else
+					break
+				end
+
+				posXDelta = posXDelta+posXOffset				
+			end
+
+		elseif dir == "vertical" then		
 			vDirLimit = 5
-			posXOffset = 0
 			posYOffset = 1
+			posYDelta = 1
 
-		elseif dir == "up" then
-			hDirLimit = 0
-			vDirLimit = 0
-			posXOffset = 0
+			while stageI+posYDelta <= vDirLimit do
+				if self.stage[stageI+posYDelta][stageJ].checkVConnected == true then break end
+
+				if self.stage[stageI][stageJ].color == self.stage[stageI+posYDelta][stageJ].color then
+					connPos[#connPos+1] = {stageJ, stageI+posYDelta}
+				else
+					break
+				end
+				
+				posYDelta = posYDelta+posYOffset
+			end
+
+			vDirLimit = 1
 			posYOffset = -1
+			posYDelta = -1
 
-		end
+			while stageI+posYDelta >= vDirLimit do
+				if self.stage[stageI+posYDelta][stageJ].checkVConnected == true then break end
 
-		posXDelta = posXOffset
-		posYDelta = posYOffset
-
-		while posXDelta ~= hDirLimit and posYDelta ~= vDirLimit do
-			if self.stage[stageI][stageJ].color == self.stage[stageI+posYDelta][stageJ+posXDelta] then				
-				connPos[#connPos] = {stageJ+posXDelta, stageI+posYDelta}
-			else
-				break
+				if self.stage[stageI][stageJ].color == self.stage[stageI+posYDelta][stageJ].color then
+					connPos[#connPos+1] = {stageJ, stageI+posYDelta}
+				else
+					break
+				end
+				
+				posYDelta = posYDelta+posYOffset
 			end
 
-			posXDelta = posXDelta+posXOffset
-			posYDelta = posYDelta+posYOffset
-		end
+		end		
 
+		-- check過的更新
 		for i=1, #connPos do
-			if dir == "right" or dir == "left" then
-				self.stage[connPos[i][2]][connPos[i][1]].CheckHConnected = true
-			if dir == "down" or dir == "up" then
-				self.stage[connPos[i][2]][connPos[i][1]].CheckVConnected = true
+			if dir == "horizon" then
+				self.stage[connPos[i][2]][connPos[i][1]].checkHConnected = true
+			elseif dir == "vertical" then
+				self.stage[connPos[i][2]][connPos[i][1]].checkVConnected = true
 			end
-		end
+		end		
 
-		if #connPos >= 3 then
+		if #connPos >= 2 then
+			print( dir, #connPos )
 			return connPos
 		else
 			return { }
 		end
 	end
 
+	gemPos[1] = {stageJ, stageI}
+
+	local idx = 1
+
+	while idx <= #gemPos do		
+		local hGems, vGems = { }, { }			
+
+		if self.stage[gemPos[idx][2]][gemPos[idx][1]].checkHConnected == false then
+			self.stage[gemPos[idx][2]][gemPos[idx][1]].checkHConnected = true
+			hGems = getDirConnectedGemPos(gemPos[idx][2], gemPos[idx][1], "horizon")						
+		end
+
+		if self.stage[gemPos[idx][2]][gemPos[idx][1]].checkVConnected == false then
+			self.stage[gemPos[idx][2]][gemPos[idx][1]].checkVConnected = true
+			vGems = getDirConnectedGemPos(gemPos[idx][2], gemPos[idx][1], "vertical")			
+		end
+
+		if #hGems > 0 then
+			for i=1, #hGems do
+				gemPos[#gemPos+1] = hGems[i]
+			end
+		end
+
+		if #vGems > 0 then
+			for i=1, #vGems do
+				gemPos[#gemPos+1] = vGems[i]
+			end
+		end
+
+		idx = idx+1
+	end
+
+	return gemPos
 end
 
 -- 碰撞物件互換, aI:a的橫排, aJ:a的縱列, bI:b的橫排, bJ:b的縱列
@@ -225,7 +305,8 @@ end
 function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	local posTable = { }
 	local idx = 1
-	local connected = false
+	-- 迴圈跳出標準
+	local connected
 
 	for i=1, 5 do
         for j=1, 6 do
@@ -239,8 +320,8 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     	local rand = math.random(1, #colorIdxArr)
 	    gem.stagePos = {x=posTable[i][1], y=posTable[i][2]}
 	    gem.color = GM.Color[colorIdxArr[rand]]
-	    gem.CheckHConnected = false
-	    gem.CheckVConnected = false
+	    gem.checkHConnected = false
+	    gem.checkVConnected = false
 	    local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
 	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[colorIdxArr[rand]], posX, posY )
 
@@ -255,7 +336,9 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     end
 
     -- 確認盤面是否有連結
-    local function checkAllGem()
+    local function checkAllGem()    	
+    	connected = false
+
     	for i=1, #posTable do
     		local idx = 1
     		local pos = posTable[i]
@@ -283,7 +366,7 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	    		-- 將剛剛的顏色引數帶入並確認未連結
 	    		while self:CheckConnected(pos[2], pos[1]) == true do
 	    			if idx > #tmpIdxArr then
-	    				local connected = true
+	    				connected = true
 	    				break
 	    			end
 
@@ -305,6 +388,7 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     	end
     end
 
+    -- 不允許預設連線
     if connectionAllowed == false then
     	local checkTimes = 0
 
@@ -312,17 +396,23 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     		checkAllGem()
     		checkTimes = checkTimes+1
 
+    		-- 最多會check幾次
     		if checkTimes >= 5 then
     			break
-    		end    		
-    	until(connected == false)
+    		end
+    	until(connected == false)    	
     end
 
 end
 
 -- 消除盤面中有連線的gem
 function _:EliminateGem()
-
+	for i=1, 5 do
+		for j=1, 6 do
+			self.stage[i][j].checkHConnected = false
+			self.stage[i][j].checkVConnected = false
+		end
+	end
 end
 
 -- 相對位置轉成實際位置, i:橫排, j:縱列
