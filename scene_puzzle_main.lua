@@ -50,7 +50,7 @@ function scene:show( event )
 
     if phase == "will" then
         -- 產生盤面
-        local colorIdxArr = {1, 2}
+        local colorIdxArr = {1, 2, 3, 4}
         stageManager:GenerateGem(sceneGroup, colorIdxArr, true, gemDrag)
 
         -- 初始化監看消耗記憶體的文字
@@ -124,17 +124,18 @@ function gemDrag( event )
         t.startY = event.y
         touchedGemI, touchedGemJ = stageManager.worldToStagePos(event.x, event.y)
 
+        print(stageManager.stage[touchedGemI][touchedGemJ].checkHConnected, stageManager.stage[touchedGemI][touchedGemJ].checkHConnected)
+
         --showGemInfo(touchedGemI, touchedGemJ)
 
         if stageManager:CheckConnected(touchedGemI, touchedGemJ) == true then
-            local posT = stageManager:GetConnectedGemPos(touchedGemI, touchedGemJ)            
-            print(#posT)
+            --local posT = stageManager:GetConnectedGemPos(touchedGemI, touchedGemJ)
 
-            if #posT > 0 then
-                for i, v in ipairs(table) do
-                    print(i .. v[1] .. ", " .. v[2])
-                end
-            end
+            -- if #posT > 0 then
+            --     for i, v in ipairs(posT) do
+            --         print(i .. ". " .. v[2] .. ", " .. v[1])
+            --     end
+            -- end
         end
 
     elseif t.isFocus then
@@ -241,7 +242,7 @@ function gemDrag( event )
                 touchedGemJ = collidedGemJ
                 touchedGemI = collidedGemI
                 collidedGemI = nil
-                collidedGemJ = nil                
+                collidedGemJ = nil
             end
 
             myCircle.x = event.x
@@ -253,7 +254,24 @@ function gemDrag( event )
 
             t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)
 
-            stageManager:EliminateGem()
+            local allClearGemPos = { }
+
+            for i=1, 5 do
+                for j=1, 6 do
+                    if stageManager.stage[i][j].checkHConnected == false or stageManager.stage[i][j].checkVConnected == false then
+                        local clearGemPos = stageManager:GetConnectedGemPos(i, j)
+
+                        if #clearGemPos > 0 then                            
+                            allClearGemPos[#allClearGemPos+1] = clearGemPos
+                        end
+                    end
+                end
+            end
+
+            --local connectedGemPos = stageManager:GetConnectedGemPos(touchedGemI, touchedGemJ)
+            stageManager:EliminateGem(allClearGemPos)
+
+            allClearGemPos = nil
         end
     end
 

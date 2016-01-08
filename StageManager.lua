@@ -65,7 +65,7 @@ function _:CheckConnected( stageI, stageJ )
 	idx = 1
 	connectedAmount = 1
 	while stageJ+idx<=6 do
-		if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+idx].color then
+		if self:GetColor(stageI, stageJ) == self:GetColor(stageI, stageJ+idx) and self:GetColor(stageI, stageJ) ~= "none" then
 			connectedAmount = connectedAmount+1
 			idx = idx+1
 		else			
@@ -84,7 +84,7 @@ function _:CheckConnected( stageI, stageJ )
 	-- 檢查左方連線
 	idx = -1	
 	while stageJ+idx>=1 do
-		if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+idx].color then
+		if self:GetColor(stageI, stageJ) == self:GetColor(stageI, stageJ+idx) and self:GetColor(stageI, stageJ) ~= "none" then
 			connectedAmount = connectedAmount+1
 			idx = idx-1
 		else
@@ -105,7 +105,7 @@ function _:CheckConnected( stageI, stageJ )
 	idx = 1
 	connectedAmount = 1
 	while stageI+idx<=5 do
-		if self.stage[stageI][stageJ].color == self.stage[stageI+idx][stageJ].color then
+		if self:GetColor(stageI, stageJ) == self:GetColor(stageI+idx, stageJ) and self:GetColor(stageI, stageJ) ~= "none" then
 			connectedAmount = connectedAmount+1
 			idx = idx+1
 		else
@@ -124,7 +124,7 @@ function _:CheckConnected( stageI, stageJ )
 	-- 檢查上方連線
 	idx = -1	
 	while stageI+idx>=1 do
-		if self.stage[stageI][stageJ].color == self.stage[stageI+idx][stageJ].color then
+		if self:GetColor(stageI, stageJ) == self:GetColor(stageI+idx, stageJ) and self:GetColor(stageI, stageJ) ~= "none" then
 			connectedAmount = connectedAmount+1
 			idx = idx-1
 		else
@@ -169,7 +169,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 			while stageJ+posXDelta <= hDirLimit do
 				if self.stage[stageI][stageJ+posXDelta].checkHConnected == true then break end
 
-				if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+posXDelta].color then
+				if self:GetColor(stageI, stageJ) == self:GetColor(stageI, stageJ+posXDelta) and self:GetColor(stageI, stageJ) ~= "none" then
 					connPos[#connPos+1] = {stageJ+posXDelta, stageI}
 				else
 					break
@@ -185,7 +185,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 			while stageJ+posXDelta >= hDirLimit do
 				if self.stage[stageI][stageJ+posXDelta].checkHConnected == true then break end
 
-				if self.stage[stageI][stageJ].color == self.stage[stageI][stageJ+posXDelta].color then
+				if self:GetColor(stageI, stageJ) == self:GetColor(stageI, stageJ+posXDelta) and self:GetColor(stageI, stageJ) ~= "none" then
 					connPos[#connPos+1] = {stageJ+posXDelta, stageI}
 				else
 					break
@@ -202,7 +202,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 			while stageI+posYDelta <= vDirLimit do
 				if self.stage[stageI+posYDelta][stageJ].checkVConnected == true then break end
 
-				if self.stage[stageI][stageJ].color == self.stage[stageI+posYDelta][stageJ].color then
+				if self:GetColor(stageI, stageJ) == self:GetColor(stageI+posYDelta, stageJ) and self:GetColor(stageI, stageJ) ~= "none" then
 					connPos[#connPos+1] = {stageJ, stageI+posYDelta}
 				else
 					break
@@ -218,7 +218,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 			while stageI+posYDelta >= vDirLimit do
 				if self.stage[stageI+posYDelta][stageJ].checkVConnected == true then break end
 
-				if self.stage[stageI][stageJ].color == self.stage[stageI+posYDelta][stageJ].color then
+				if self:GetColor(stageI, stageJ) == self:GetColor(stageI+posYDelta, stageJ) and self:GetColor(stageI, stageJ) ~= "none" then
 					connPos[#connPos+1] = {stageJ, stageI+posYDelta}
 				else
 					break
@@ -238,8 +238,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 			end
 		end		
 
-		if #connPos >= 2 then
-			print( dir, #connPos )
+		if #connPos >= 2 then			
 			return connPos
 		else
 			return { }
@@ -405,14 +404,59 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 
 end
 
--- 消除盤面中有連線的gem
-function _:EliminateGem()
+-- 消除盤面中有連線的gem, clearGemPos:消除的gem座標
+-- ex:{ { {g1x1, g1y1},{g1x2, g1y2} }, { {g2x1, g2y1}, {g2x2, g2y2} } }, g=group
+function _:EliminateGem( clearGemPos )
+	local clearDelay = 500
+
 	for i=1, 5 do
 		for j=1, 6 do
 			self.stage[i][j].checkHConnected = false
 			self.stage[i][j].checkVConnected = false
 		end
 	end
+
+	local function clearGem(event)
+		local params = event.source.params
+        local pos = params.gemPos        
+
+        for i=1, #pos do
+        	self.stage[pos[i][2]][pos[i][1]].color = "none"
+        	local target = self.stage[pos[i][2]][pos[i][1]].img
+        	transition.to( target, {time=clearDelay, alpha=0} )
+        end		
+	end
+
+	local function gemDrop(event)
+		-- 計算掉落距離
+		local dropDuration = 500
+		local dropIdxArr = { }
+
+		for j=1, 6 do
+			local dropIdx = 0
+
+			for i=5, 1, -1 do
+				if self.stage[i][j].color == "none" then
+					dropIdx = dropIdx+1
+				else
+					if dropIdx > 0 then
+						local target = self.stage[i][j].img
+						transition.to( target, {time=dropDuration, y=target.y+(dropIdx+GM.gemHeight), transition=easing.inQuad} )
+					end
+				end
+			end
+
+			dropIdxArr[j] = dropIdx
+		end
+
+	end
+	
+	for i=1, #clearGemPos do
+		local t = timer.performWithDelay( clearDelay*(i-1), clearGem )
+		t.params = {gemPos = clearGemPos[i]}
+	end
+
+	timer.performWithDelay( clearDelay*#clearGemPos, gemDrop )
 end
 
 -- 相對位置轉成實際位置, i:橫排, j:縱列

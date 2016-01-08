@@ -11,7 +11,7 @@ function _:New(object)
 end
 
 _.stagePos = nil
-_.color = nil
+_.color = "none"
 _.checkHConnected = nil
 _.checkVConnected = nil
 _.img = nil
