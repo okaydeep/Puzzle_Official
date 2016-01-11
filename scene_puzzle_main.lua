@@ -29,6 +29,11 @@ local collidedGemJ
 
 local myCircle
 
+-- 盤面儲存
+local gemSave
+-- 移動儲存
+local moveSave
+
 -- For Debug
 local systemMemUsed
 local textureMemUsed
@@ -41,7 +46,6 @@ function scene:create( event )
 
     myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
     myCircle.isVisable = false
-
 end
 
 function scene:show( event )
@@ -52,6 +56,9 @@ function scene:show( event )
         -- 產生盤面
         local colorIdxArr = {1, 2, 3, 4}
         stageManager:GenerateGem(sceneGroup, colorIdxArr, true, gemDrag)
+
+        gemSave = { }
+        moveSave = { }
 
         -- 初始化監看消耗記憶體的文字
         local options = 
@@ -108,9 +115,13 @@ end
 -- 每顆gem的觸控事件
 function gemDrag( event )
     local t = event.target
-    local phase = event.phase        
+    local phase = event.phase
 
-    if "began" == phase then
+    if GM.canTouch == false then
+        return
+    end
+
+    if "began" == phase then        
         display.getCurrentStage():setFocus( t )
         t.isFocus = true
         t.x = event.x
@@ -124,19 +135,22 @@ function gemDrag( event )
         t.startY = event.y
         touchedGemI, touchedGemJ = stageManager.worldToStagePos(event.x, event.y)
 
-        print(stageManager.stage[touchedGemI][touchedGemJ].checkHConnected, stageManager.stage[touchedGemI][touchedGemJ].checkHConnected)
+        showGemInfo(touchedGemI, touchedGemJ)        
 
-        --showGemInfo(touchedGemI, touchedGemJ)
+        for i=1, 5 do
+            gemSave[i] = { }
 
-        if stageManager:CheckConnected(touchedGemI, touchedGemJ) == true then
-            --local posT = stageManager:GetConnectedGemPos(touchedGemI, touchedGemJ)
-
-            -- if #posT > 0 then
-            --     for i, v in ipairs(posT) do
-            --         print(i .. ". " .. v[2] .. ", " .. v[1])
-            --     end
-            -- end
+            for j=1, 6 do
+                for idx, val in ipairs(GM.Color) do
+                    if stageManager:GetColor(i, j) == val then
+                        gemSave[i][j] = idx
+                        break
+                    end        
+                end                
+            end
         end
+
+        moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
 
     elseif t.isFocus then
         if "moved" == phase then
@@ -240,9 +254,10 @@ function gemDrag( event )
             if collidedGemI ~= nil and collidedGemJ ~= nil then                
                 stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)
                 touchedGemJ = collidedGemJ
-                touchedGemI = collidedGemI
+                touchedGemI = collidedGemI                
                 collidedGemI = nil
                 collidedGemJ = nil
+                moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
             end
 
             myCircle.x = event.x
@@ -251,32 +266,37 @@ function gemDrag( event )
         elseif "ended" == phase or "cancelled" == phase then
             display.getCurrentStage():setFocus( nil )
             t.isFocus = false
-
-            t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)
-
-            local allClearGemPos = { }
-
-            for i=1, 5 do
-                for j=1, 6 do
-                    if stageManager.stage[i][j].checkHConnected == false or stageManager.stage[i][j].checkVConnected == false then
-                        local clearGemPos = stageManager:GetConnectedGemPos(i, j)
-
-                        if #clearGemPos > 0 then                            
-                            allClearGemPos[#allClearGemPos+1] = clearGemPos
-                        end
-                    end
-                end
-            end
-
-            --local connectedGemPos = stageManager:GetConnectedGemPos(touchedGemI, touchedGemJ)
-            stageManager:EliminateGem(allClearGemPos)
-
-            allClearGemPos = nil
+            GM.canTouch = false
+            t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)            
+            --stageManager:EliminateGem()
+            playback()
         end
     end
 
     -- Stop further propagation of touch event!
     return true
+end
+
+function playback()
+    for i=1, 5 do
+        for j=1, 6 do            
+            local posX, posY = stageManager.stageToWorldPos(i, j)
+            stageManager.stage[i][j].img:removeSelf()
+            stageManager.stage[i][j].img = display.newImage( sceneGroup, GM.SpritePath..GM.GemName[gemSave[i][j]], posX, posY )
+        end
+    end
+
+    for i=1, #moveSave do
+        if i+1 > #moveSave then
+            break
+        end
+
+        local pos = moveSave[i]
+        local target = stageManager.stage[pos[2]][pos[1]].img
+        pos = moveSave[i+1]
+        local dest = stageManager.stage[pos[2]][pos[1]].img
+        transition.to( target, {time=GM.playbackMoveDuration, delay=GM.playbackMoveDuration*i, x=dest.x, y=dest.y} )        
+    end
 end
 
 -- 更新消耗記憶體

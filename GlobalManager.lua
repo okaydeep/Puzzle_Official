@@ -15,6 +15,8 @@ _.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", 
 
 _.Color = { "red", "orange", "green", "blue", "purple", "pink" }
 
+_.canTouch = true
+
 _.touchRadius = 40
 _.touchAreaCoe = 0.3	-- 觸碰範圍係數, 0.5是預設, 越小越好斜轉
 
@@ -23,6 +25,8 @@ _.gemHeight = 110
 
 _.gemStartX = 10
 _.gemStartY = 100
+
+_.playbackMoveDuration = 0.3
 
 -- 深層拷貝(可以複製table), object:欲複製的目標物件
 function _.deepCopy(object)

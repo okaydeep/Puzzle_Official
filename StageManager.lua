@@ -355,7 +355,7 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	    		end	    		
 
 	    		-- 使用洗牌法打亂顏色引數
-	    		for j=#tmpIdxArr, 1, -1 do	    			
+	    		for j=#tmpIdxArr, 1, -1 do
 	    			local rand = math.random(1, j)
 	    			local tmpIdx = tmpIdxArr[rand]
 	    			tmpIdxArr[rand] = tmpIdxArr[j]
@@ -399,16 +399,17 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     		if checkTimes >= 5 then
     			break
     		end
-    	until(connected == false)    	
+    	until(connected == false)
     end
 
 end
 
--- 消除盤面中有連線的gem, clearGemPos:消除的gem座標
--- ex:{ { {g1x1, g1y1},{g1x2, g1y2} }, { {g2x1, g2y1}, {g2x2, g2y2} } }, g=group
-function _:EliminateGem( clearGemPos )
+-- 消除盤面中有連線的gem
+function _:EliminateGem()
+	-- 每一串珠消除的延遲
 	local clearDelay = 500
 
+	-- 將直橫檢查還原
 	for i=1, 5 do
 		for j=1, 6 do
 			self.stage[i][j].checkHConnected = false
@@ -416,6 +417,58 @@ function _:EliminateGem( clearGemPos )
 		end
 	end
 
+	-- 更新掉落後的珠子
+	local function updateGem()
+		for j=1, 6 do
+			for i=5, 1, -1 do
+				if self:GetColor(i, j) == "none" then
+					local yIdx = -1
+
+					while i+yIdx >= 1 do
+						if self:GetColor(i+yIdx, j) ~= "none" then
+							self:GemSwap(i, j, i+yIdx, j)
+							-- self.stage[i][j].color = self:GetColor(i+yIdx, j)
+							-- self.stage[i][j].img = self.stage[i+yIdx][j].img
+							-- self.stage[i+yIdx][j].color = "none"
+							-- self.stage[i+yIdx][j].img:removeSelf()
+							break
+						else
+							yIdx = yIdx-1
+						end
+					end
+				end
+			end
+		end
+
+		self:EliminateGem()
+	end
+
+	-- 消除後的掉落
+	local function gemDrop(event)
+		-- 計算掉落距離
+		local dropDuration = 500
+		local dropIdxArr = { }		
+
+		for j=1, 6 do
+			local dropIdx = 0
+
+			for i=5, 1, -1 do
+				if self.stage[i][j].color == "none" then
+					dropIdx = dropIdx+1
+				else
+					if dropIdx > 0 then
+						local target = self.stage[i][j].img
+						transition.to( target, {time=dropDuration, y=target.y+(GM.gemHeight*dropIdx), transition=easing.inQuad, 
+							onComplete=updateGem} )
+					end
+				end
+			end
+
+			dropIdxArr[j] = dropIdx
+		end
+	end
+
+	-- 將組合消除
 	local function clearGem(event)
 		local params = event.source.params
         local pos = params.gemPos        
@@ -427,36 +480,34 @@ function _:EliminateGem( clearGemPos )
         end		
 	end
 
-	local function gemDrop(event)
-		-- 計算掉落距離
-		local dropDuration = 500
-		local dropIdxArr = { }
+	-- 放置待消除組合的容器
+	-- ex:{ { {g1x1, g1y1},{g1x2, g1y2} }, { {g2x1, g2y1}, {g2x2, g2y2} } }, g=group
+    local allClearGemPos = { }
 
-		for j=1, 6 do
-			local dropIdx = 0
+    -- 全盤檢查, 儲存相連的組合
+    for i=1, 5 do
+        for j=1, 6 do
+            if self.stage[i][j].checkHConnected == false or self.stage[i][j].checkVConnected == false then
+                local clearGemPos = self:GetConnectedGemPos(i, j)
 
-			for i=5, 1, -1 do
-				if self.stage[i][j].color == "none" then
-					dropIdx = dropIdx+1
-				else
-					if dropIdx > 0 then
-						local target = self.stage[i][j].img
-						transition.to( target, {time=dropDuration, y=target.y+(dropIdx+GM.gemHeight), transition=easing.inQuad} )
-					end
-				end
-			end
+                if #clearGemPos > 0 then
+                    allClearGemPos[#allClearGemPos+1] = clearGemPos
+                end
+            end
+        end
+    end
 
-			dropIdxArr[j] = dropIdx
+    if #allClearGemPos > 0 then	
+		for i=1, #allClearGemPos do
+			local t = timer.performWithDelay( clearDelay*(i-1), clearGem )
+			t.params = {gemPos = allClearGemPos[i]}
 		end
 
-	end
-	
-	for i=1, #clearGemPos do
-		local t = timer.performWithDelay( clearDelay*(i-1), clearGem )
-		t.params = {gemPos = clearGemPos[i]}
+		timer.performWithDelay( clearDelay*#allClearGemPos, addNewGem )
+		timer.performWithDelay( clearDelay*#allClearGemPos, gemDrop )
 	end
 
-	timer.performWithDelay( clearDelay*#clearGemPos, gemDrop )
+	allClearGemPos = nil
 end
 
 -- 相對位置轉成實際位置, i:橫排, j:縱列
