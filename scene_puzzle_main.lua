@@ -278,12 +278,34 @@ function gemDrag( event )
 end
 
 function playback()
+    local sceneGroup = scene.view
+
     for i=1, 5 do
         for j=1, 6 do            
             local posX, posY = stageManager.stageToWorldPos(i, j)
             stageManager.stage[i][j].img:removeSelf()
+            print(GM.GemName[gemSave[i][j]])
             stageManager.stage[i][j].img = display.newImage( sceneGroup, GM.SpritePath..GM.GemName[gemSave[i][j]], posX, posY )
         end
+    end
+
+    local function swap(event)
+        local params = event.source.params
+        stageManager:GemSwap(params.aStagePos[1], params.aStagePos[2], params.bStagePos[1], params.bStagePos[2])
+    end
+
+    local function playbackSwap(fromImg, toImg)        
+        local aI, aJ = stageManager.worldToStagePos(fromImg.x, fromImg.y)
+        local bI, bJ = stageManager.worldToStagePos(toImg.x, toImg.y)
+        local evtHnd = timer.performWithDelay(GM.playbackMoveDuration*0.5, swap)
+        evtHnd.params = {aStagePos = {aI, aJ}, bStagePos = {bI, bJ}}
+    end
+
+    local function playbackMove(event)
+        local params = event.source.params        
+        
+        local evtHnd = transition.to( params.fromImg, {time=GM.playbackMoveDuration, x=params.toImg.x, y=params.toImg.y, 
+            onStart=function() playbackSwap(params.fromImg, params.toImg) end} )        
     end
 
     for i=1, #moveSave do
@@ -291,11 +313,12 @@ function playback()
             break
         end
 
-        local pos = moveSave[i]
-        local target = stageManager.stage[pos[2]][pos[1]].img
-        pos = moveSave[i+1]
-        local dest = stageManager.stage[pos[2]][pos[1]].img
-        transition.to( target, {time=GM.playbackMoveDuration, delay=GM.playbackMoveDuration*i, x=dest.x, y=dest.y} )        
+        local prePos = moveSave[i]
+        local target = stageManager.stage[prePos[2]][prePos[1]].img
+        local postPos = moveSave[i+1]
+        local dest = stageManager.stage[postPos[2]][postPos[1]].img
+        local evtHnd = timer.performWithDelay( GM.playbackMoveDuration*i, playbackMove )
+        evtHnd.params = { fromImg = target, toImg = dest }
     end
 end
 

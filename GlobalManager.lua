@@ -26,7 +26,7 @@ _.gemHeight = 110
 _.gemStartX = 10
 _.gemStartY = 100
 
-_.playbackMoveDuration = 0.3
+_.playbackMoveDuration = 300
 
 -- 深層拷貝(可以複製table), object:欲複製的目標物件
 function _.deepCopy(object)
