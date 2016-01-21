@@ -293,6 +293,12 @@ function _:GemSwap( aI, aJ, bI, bJ )
 		self.stage[bI][bJ] = nil
 		self.stage[bI][bJ] = tmpA
 
+		-- Not working
+		-- local gemA = table.remove( self.stage[aI], aJ )
+		-- local gemB = table.remove( self.stage[bI], bJ )
+		-- table.insert( self.stage[bI], bJ, gemA )
+		-- table.insert( self.stage[aI], aJ, gemB )
+
 		local gemA = self.stage[aI][aJ]
 		gemA.stagePos.y, gemA.stagePos.x = aI, aJ
 		local gemB = self.stage[bI][bJ]
@@ -300,12 +306,9 @@ function _:GemSwap( aI, aJ, bI, bJ )
 	end
 end
 
--- 產生盤面, colorIdxArr:盤面會出現的顏色引數陣列, connectionAllowed:允許預設連線
-function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
+function _:InitGem()
 	local posTable = { }
 	local idx = 1
-	-- 迴圈跳出標準
-	local connected
 
 	for i=1, 5 do
         for j=1, 6 do
@@ -315,23 +318,58 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     end
 
     for i=1, #posTable do
-		local gem = Gem:New(gem)
-    	local rand = math.random(1, #colorIdxArr)
+		local gem = Gem:New(gem)    	
 	    gem.stagePos = {x=posTable[i][1], y=posTable[i][2]}
-	    gem.color = GM.Color[colorIdxArr[rand]]
+	    gem.color = "none"
 	    gem.checkHConnected = false
-	    gem.checkVConnected = false
-	    local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
-	    gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[colorIdxArr[rand]], posX, posY )
+	    gem.checkVConnected = false	    
 
-	    if touchEvt ~= nil then
-	    	gem.img:addEventListener("touch", touchEvt)
-	    end
+	    self:AddGemToStage(gem.stagePos.y, gem.stagePos.x, gem)	    
+    end
+end
 
-	    self:AddGemToStage(posTable[i][2], posTable[i][1], gem)
+-- 產生盤面, colorIdxArr:盤面會出現的顏色引數陣列, connectionAllowed:允許預設連線
+function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )	
+	-- 迴圈跳出標準
+	local connected
 
-	    -- test
-	    local circle = display.newCircle( posX, posY, GM.touchRadius*0.5 )
+	local gemInitPosYOffset = { }
+
+	for j=1, 6 do
+		local offset = 0
+
+		for i=1, 5 do
+			if self.stage[i][j].color == "none" then
+				offset = offset+1
+			end
+		end
+
+		gemInitPosYOffset[j] = offset
+	end
+
+    for i=1, 5 do
+    	for j=1, 6 do
+    		local gem = self.stage[i][j]
+
+    		-- 如果gem種類為none
+    		if gem.color == "none" then
+		    	local rand = math.random(1, #colorIdxArr)		    
+			    gem.color = GM.Color[colorIdxArr[rand]]
+
+			    --local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
+		    	gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[colorIdxArr[rand]], 0, -1000 )
+			end
+
+		    gem.checkHConnected = false
+		    gem.checkVConnected = false		    
+
+		    if touchEvt ~= nil then
+		    	gem.img:addEventListener("touch", touchEvt)
+		    end		    
+
+		    -- test
+		   	-- local circle = display.newCircle( posX, posY, GM.touchRadius*0.5 )
+	  	end
     end
 
     -- 確認盤面是否有連結
@@ -369,10 +407,10 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	    				break
 	    			end
 
-	    			self.stage[pos[2]][pos[1]].color = GM.Color[tmpIdxArr[idx]]
-    				local posX, posY = self.stageToWorldPos(pos[2], pos[1])
+	    			self.stage[pos[2]][pos[1]].color = GM.Color[tmpIdxArr[idx]]    				
 	    			self.stage[pos[2]][pos[1]].img:removeSelf()
-	    			self.stage[pos[2]][pos[1]].img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[tmpIdxArr[idx]], posX, posY )
+	    			self.stage[pos[2]][pos[1]].img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[tmpIdxArr[idx]], 0, -1000 )
+
 	    			if touchEvt ~= nil then
 				    	self.stage[pos[2]][pos[1]].img:addEventListener("touch", touchEvt)
 				    end
@@ -402,13 +440,24 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     	until(connected == false)
     end
 
+    -- 掉落動畫
+    for j=1, 6 do
+    	for i=1, 5 do
+    		local gem = self.stage[i][j]
+    		local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
+    		local initPosY = 200-(gemInitPosYOffset[j]-i+1)*GM.gemHeight
+    		
+    		gem.img.x, gem.img.y = posX, initPosY
+    		gem.img.alpha = 0.3
+
+    		local transParams = {time=GM.dropDuration, y=posY, alpha=1, transition=easing.inQuad}
+    		transition.to( gem.img, transParams )
+    	end
+    end
 end
 
 -- 消除盤面中有連線的gem
 function _:EliminateGem()
-	-- 每一串珠消除的延遲
-	local clearDelay = 500
-
 	-- 將直橫檢查還原
 	for i=1, 5 do
 		for j=1, 6 do
@@ -445,8 +494,7 @@ function _:EliminateGem()
 
 	-- 消除後的掉落
 	local function gemDrop(event)
-		-- 計算掉落距離
-		local dropDuration = 500
+		-- 計算掉落距離		
 		local dropIdxArr = { }		
 
 		for j=1, 6 do
@@ -458,7 +506,7 @@ function _:EliminateGem()
 				else
 					if dropIdx > 0 then
 						local target = self.stage[i][j].img
-						transition.to( target, {time=dropDuration, y=target.y+(GM.gemHeight*dropIdx), transition=easing.inQuad, 
+						transition.to( target, {time=GM.dropDuration, y=target.y+(GM.gemHeight*dropIdx), transition=easing.inQuad, 
 							onComplete=updateGem} )
 					end
 				end
@@ -476,7 +524,7 @@ function _:EliminateGem()
         for i=1, #pos do
         	self.stage[pos[i][2]][pos[i][1]].color = "none"
         	local target = self.stage[pos[i][2]][pos[i][1]].img
-        	transition.to( target, {time=clearDelay, alpha=0} )
+        	transition.to( target, {time=GM.clearDelay, alpha=0} )
         end		
 	end
 
@@ -499,12 +547,12 @@ function _:EliminateGem()
 
     if #allClearGemPos > 0 then	
 		for i=1, #allClearGemPos do
-			local t = timer.performWithDelay( clearDelay*(i-1), clearGem )
+			local t = timer.performWithDelay( GM.clearDelay*(i-1), clearGem )
 			t.params = {gemPos = allClearGemPos[i]}
 		end
 
-		timer.performWithDelay( clearDelay*#allClearGemPos, addNewGem )
-		timer.performWithDelay( clearDelay*#allClearGemPos, gemDrop )
+		timer.performWithDelay( GM.clearDelay*#allClearGemPos, addNewGem )
+		timer.performWithDelay( GM.clearDelay*#allClearGemPos, gemDrop )
 	end
 
 	allClearGemPos = nil

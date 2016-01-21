@@ -53,9 +53,21 @@ function scene:show( event )
     local phase = event.phase    
 
     if phase == "will" then
-        -- 產生盤面
+        -- 欲使用的gem引數
         local colorIdxArr = {1, 2, 3, 4}
-        stageManager:GenerateGem(sceneGroup, colorIdxArr, true, gemDrag)
+        -- 初始盤面
+        stageManager:InitGem()
+        -- 延遲500ms產生盤面 (匿名函式Anonymous Function)
+        --timer.performWithDelay(500, function() stageManager:GenerateGem(sceneGroup, colorIdxArr, true, gemDrag); end )
+        --timer.performWithDelay(500, function() selectPhoto() end )
+
+        -- local imgA = display.newImage(sceneGroup, GM.SpritePath..GM.GemName[1], 100, 100)
+        -- local w, h = imgA.width, imgA.height
+        -- imgA.xScale = 100/w
+        -- imgA.yScale = 100/h
+
+        -- local imgB = display.newImageRect(sceneGroup, GM.SpritePath..GM.GemName[1], 100, 100)
+        -- imgB.x, imgB.y = 300, 100
 
         gemSave = { }
         moveSave = { }
@@ -85,7 +97,7 @@ function scene:show( event )
         end
         
     elseif phase == "did" then
-        
+        table.print( stageManager.stage )
     end
 end
 
@@ -112,7 +124,7 @@ end
 --
 ---------------------------------------------------------------------------------
 
--- 每顆gem的觸控事件
+-- Gem的觸控事件
 function gemDrag( event )
     local t = event.target
     local phase = event.phase
@@ -268,8 +280,8 @@ function gemDrag( event )
             t.isFocus = false
             GM.canTouch = false
             t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)            
-            --stageManager:EliminateGem()
-            playback()
+            stageManager:EliminateGem()
+            --playback()
         end
     end
 
@@ -277,8 +289,10 @@ function gemDrag( event )
     return true
 end
 
+-- 回放功能
 function playback()
     local sceneGroup = scene.view
+    local gemIdx = 2
 
     for i=1, 5 do
         for j=1, 6 do            
@@ -291,7 +305,9 @@ function playback()
 
     local function swap(event)
         local params = event.source.params
-        stageManager:GemSwap(params.aStagePos[1], params.aStagePos[2], params.bStagePos[1], params.bStagePos[2])
+        local aPos = params.aStagePos
+        local bPos = params.bStagePos
+        stageManager:GemSwap(aPos[1], aPos[2], bPos[1], bPos[2])
     end
 
     local function playbackSwap(fromImg, toImg)        
@@ -301,25 +317,43 @@ function playback()
         evtHnd.params = {aStagePos = {aI, aJ}, bStagePos = {bI, bJ}}
     end
 
+    local function checkContinue(event)
+        gemIdx = gemIdx+1
+
+        if gemIdx <= #moveSave then
+            doPlayback()
+        end        
+    end
+
     local function playbackMove(event)
         local params = event.source.params        
+        local evtHnd = transition.to( params.fromImg, {time=GM.playbackMoveDuration, x=params.toImg.x, y=params.toImg.y} )
         
-        local evtHnd = transition.to( params.fromImg, {time=GM.playbackMoveDuration, x=params.toImg.x, y=params.toImg.y, 
-            onStart=function() playbackSwap(params.fromImg, params.toImg) end} )        
+        local preX, preY = stageManager.stageToWorldPos(moveSave[gemIdx-1][2], moveSave[gemIdx-1][1])
+        transition.to( params.toImg, {time=GM.playbackMoveDuration, x=preX, y=preY, onComplete=checkContinue})        
     end
 
-    for i=1, #moveSave do
-        if i+1 > #moveSave then
-            break
+    function doPlayback()
+        if gemIdx > #moveSave then
+            return
         end
 
-        local prePos = moveSave[i]
-        local target = stageManager.stage[prePos[2]][prePos[1]].img
-        local postPos = moveSave[i+1]
-        local dest = stageManager.stage[postPos[2]][postPos[1]].img
-        local evtHnd = timer.performWithDelay( GM.playbackMoveDuration*i, playbackMove )
-        evtHnd.params = { fromImg = target, toImg = dest }
+        local moveDelay = 0
+        local startPos = moveSave[1]
+        local firstGem = stageManager.stage[startPos[2]][startPos[1]].img        
+        local postPos = moveSave[gemIdx]
+        local destGem = stageManager.stage[postPos[2]][postPos[1]].img
+
+        if gemIdx <= 2 then
+            moveDelay = GM.playbackMoveDuration
+            firstGem:toFront()
+        end
+
+        local evtHnd = timer.performWithDelay( moveDelay, playbackMove )
+        evtHnd.params = { fromImg = firstGem, toImg = destGem }        
     end
+
+    doPlayback()
 end
 
 -- 更新消耗記憶體
@@ -334,6 +368,29 @@ end
 -- 顯示gem資訊 (水平, 垂直, 顏色)
 function showGemInfo( gemI, gemJ )
     print(stageManager.stage[gemI][gemJ].stagePos.y, stageManager.stage[gemI][gemJ].stagePos.x, stageManager.stage[gemI][gemJ].color)
+end
+
+-- Test
+function selectPhotoCallback(event)
+    local photo = event.target
+
+    if photo then
+        local photoW, photoH = photo.width, photo.height
+        local photoImg = display.newImageRect(sceneGroup, photo, 200, 200)
+    end
+end
+
+-- Test
+function selectPhoto()
+    if media.hasSource( media.PhotoLibrary ) then
+        media.selectPhoto(
+        {
+            mediaSource = media.SavedPhotosAlbum,
+            listener = selectPhotoCallback            
+        })
+    else
+       native.showAlert( "Corona", "This device does not have a photo library.", { "OK" } )
+    end
 end
 
 ---------------------------------------------------------------------------------

@@ -26,6 +26,11 @@ _.gemHeight = 110
 _.gemStartX = 10
 _.gemStartY = 100
 
+-- 每一串珠消除的延遲
+_.clearDelay = 500
+-- 珠子掉落時間
+_.dropDuration = 500
+-- 回放珠子移動時間(每格)
 _.playbackMoveDuration = 300
 
 -- 深層拷貝(可以複製table), object:欲複製的目標物件
@@ -51,3 +56,39 @@ function _.deepCopy(object)
 
     return _copy(object)
 end
+
+function print_r ( t )  
+    local print_r_cache={}
+    local function sub_print_r(t,indent)
+        if (print_r_cache[tostring(t)]) then
+            print(indent.."*"..tostring(t))
+        else
+            print_r_cache[tostring(t)]=true
+            if (type(t)=="table") then
+                for pos,val in pairs(t) do
+                    if (type(val)=="table") then
+                        print(indent.."["..pos.."] => "..tostring(t).." {")
+                        sub_print_r(val,indent..string.rep(" ",string.len(pos)+4))
+                        print(indent..string.rep(" ",string.len(pos)+3).."}")
+                    elseif (type(val)=="string") then
+                        print(indent.."["..pos..'] => "'..val..'"')
+                    else
+                        print(indent.."["..pos.."] => "..tostring(val))
+                    end
+                end
+            else            
+                print(indent..tostring(t))
+            end
+        end
+    end
+    if (type(t)=="table") then
+        print(tostring(t).." {")
+        sub_print_r(t,"  ")
+        print("}")
+    else
+        sub_print_r(t,"  ")
+    end
+    print()
+end
+
+table.print = print_r
