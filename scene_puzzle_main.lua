@@ -48,6 +48,14 @@ function scene:create( event )
     myCircle.isVisable = false
 end
 
+function onColorSample( event )
+   print( "Sampling pixel at position (" .. event.x .. "," .. event.y .. ")" )
+   print( "R = " .. event.r )
+   print( "G = " .. event.g )
+   print( "B = " .. event.b )
+   print( "A = " .. event.a )
+end
+
 function scene:show( event )
     local sceneGroup = self.view
     local phase = event.phase    
@@ -59,6 +67,7 @@ function scene:show( event )
         stageManager:InitGem()
         -- 延遲500ms產生盤面 (匿名函式Anonymous Function)
         --timer.performWithDelay(500, function() stageManager:GenerateGem(sceneGroup, colorIdxArr, true, gemDrag); end )
+
         --timer.performWithDelay(500, function() selectPhoto() end )
 
         -- local imgA = display.newImage(sceneGroup, GM.SpritePath..GM.GemName[1], 100, 100)
@@ -66,8 +75,25 @@ function scene:show( event )
         -- imgA.xScale = 100/w
         -- imgA.yScale = 100/h
 
-        -- local imgB = display.newImageRect(sceneGroup, GM.SpritePath..GM.GemName[1], 100, 100)
-        -- imgB.x, imgB.y = 300, 100
+        local imgB = display.newImageRect(GM.SpritePath..GM.GemName[1], 200, 200)
+        imgB.x, imgB.y = display.contentCenterX, display.contentCenterY
+
+        -- local img = display.newImageRect( "img/major-magnet.png", 200, 200 )
+        -- img.x = display.contentCenterX
+        -- img.y = display.contentCenterY
+
+        local function onColorSample( event )
+           print( "Sampling pixel at position (" .. event.x .. "," .. event.y .. ")" )
+           print( "R = " .. event.r )
+           print( "G = " .. event.g )
+           print( "B = " .. event.b )
+           print( "A = " .. event.a )
+        end
+
+        display.colorSample( display.contentCenterX, display.contentCenterY, onColorSample )
+        display.colorSample( display.contentCenterX-25, display.contentCenterY, onColorSample )
+        display.colorSample( display.contentCenterX, display.contentCenterY+25, onColorSample )
+        display.colorSample( display.contentCenterX+25, display.contentCenterY, onColorSample )
 
         gemSave = { }
         moveSave = { }
@@ -97,7 +123,7 @@ function scene:show( event )
         end
         
     elseif phase == "did" then
-        table.print( stageManager.stage )
+        --table.print( stageManager.stage )
     end
 end
 
