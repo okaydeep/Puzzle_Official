@@ -11,9 +11,28 @@ end
 
 _.SpritePath = "img/sprite/"
 
+_.ButtonName = { "Regenerate", "Play back" }
 _.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", "gem_purple.png", "gem_pink.png" }
-
 _.Color = { "red", "orange", "green", "blue", "purple", "pink" }
+_.ColorIdxArr = { 1, 2, 3, 4, 5, 6 }
+
+_.LocatePointDir = { "TopLeft", "TopRight", "BottomRight", "BottomLeft" }
+
+_.btnDefaultOption = { 
+				left = 100,
+                top = 200,
+                label = "Button",
+                --labelColor = { default={ 1, 1, 1 }, over={ 0.4 ,0.4 ,0.4 } },
+                --font = native.systemFont,
+                fontSize = 32,
+                --emboss = true,
+                --id = "button",                
+                -- width = 160,
+                -- height = 80,
+                -- defaultFile = GM.SpritePath.."reset.png",
+                -- overFile = GM.SpritePath.."reset_pressed.png",
+                --onEvent = handleButtonEvent
+              }
 
 _.canTouch = true
 
@@ -55,6 +74,15 @@ function _.deepCopy(object)
     end
 
     return _copy(object)
+end
+
+-- Color Sample 的callback
+function _.onColorSample( event )
+   print( "Sampling pixel at position (" .. event.x .. "," .. event.y .. ")" )
+   print( "R = " .. event.r )
+   print( "G = " .. event.g )
+   print( "B = " .. event.b )
+   print( "A = " .. event.a )
 end
 
 function print_r ( t )  

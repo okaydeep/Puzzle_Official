@@ -306,8 +306,9 @@ function _:GemSwap( aI, aJ, bI, bJ )
 	end
 end
 
-function _:InitGem()
+function _.GeneratePosTable()
 	local posTable = { }
+
 	local idx = 1
 
 	for i=1, 5 do
@@ -316,6 +317,12 @@ function _:InitGem()
            idx = idx+1
         end
     end
+
+    return posTable
+end
+
+function _:InitGem()
+	local posTable = self.GeneratePosTable()
 
     for i=1, #posTable do
 		local gem = Gem:New(gem)    	
@@ -331,9 +338,18 @@ end
 -- 產生盤面, colorIdxArr:盤面會出現的顏色引數陣列, connectionAllowed:允許預設連線
 function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )	
 	-- 迴圈跳出標準
-	local connected
-
+	local connected	
 	local gemInitPosYOffset = { }
+	local posTable = self.GeneratePosTable()
+
+	for j=1, 6 do		
+		for i=1, 5 do
+			self.stage[i][j].color = "none"
+			if self.stage[i][j].img then
+				self.stage[i][j].img:removeSelf()
+			end
+		end		
+	end
 
 	for j=1, 6 do
 		local offset = 0
@@ -410,7 +426,7 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 	    			self.stage[pos[2]][pos[1]].color = GM.Color[tmpIdxArr[idx]]    				
 	    			self.stage[pos[2]][pos[1]].img:removeSelf()
 	    			self.stage[pos[2]][pos[1]].img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[tmpIdxArr[idx]], 0, -1000 )
-
+	    				    			
 	    			if touchEvt ~= nil then
 				    	self.stage[pos[2]][pos[1]].img:addEventListener("touch", touchEvt)
 				    end
@@ -443,7 +459,7 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     -- 掉落動畫
     for j=1, 6 do
     	for i=1, 5 do
-    		local gem = self.stage[i][j]
+    		local gem = self.stage[i][j]    		
     		local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
     		local initPosY = 200-(gemInitPosYOffset[j]-i+1)*GM.gemHeight
     		
@@ -453,7 +469,7 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
     		local transParams = {time=GM.dropDuration, y=posY, alpha=1, transition=easing.inQuad}
     		transition.to( gem.img, transParams )
     	end
-    end
+    end    
 end
 
 -- 消除盤面中有連線的gem
