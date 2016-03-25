@@ -46,11 +46,11 @@ _.gemStartX = 10
 _.gemStartY = 100
 
 -- 每一串珠消除的延遲
-_.clearDelay = 500
+_.clearDelay = 350
 -- 珠子掉落時間
-_.dropDuration = 500
+_.dropDuration = 350
 -- 回放珠子移動時間(每格)
-_.playbackMoveDuration = 300
+_.playbackMoveDuration = 250
 
 -- 深層拷貝(可以複製table), object:欲複製的目標物件
 function _.deepCopy(object)

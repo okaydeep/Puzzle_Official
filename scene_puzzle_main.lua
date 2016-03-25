@@ -142,7 +142,7 @@ function gemDrag( event )
                 end                
             end
         end
-
+        moveSave = { }
         moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
     elseif t.isFocus then
         if "moved" == phase then
@@ -250,6 +250,7 @@ function gemDrag( event )
                 collidedGemI = nil
                 collidedGemJ = nil
                 moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
+                print(#moveSave)
             end
 
             myCircle.x = event.x
@@ -270,10 +271,17 @@ end
 -- 回放功能
 function playback()
     local sceneGroup = scene.view
-    local gemIdx = 2
+    -- local gemIdx = 2
+    local moveGemIdx = 1
+    local moveDelay = GM.playbackMoveDuration
+    local swapDelay = GM.playbackMoveDuration*0.4
 
-    if gemIdx > #moveSave then
+    if #moveSave < 2 then
         return
+    end
+
+    for i,v in ipairs(moveSave) do
+        print(i,v)
     end
 
     for i=1, 5 do
@@ -281,49 +289,84 @@ function playback()
             local posX, posY = stageManager.stageToWorldPos(i, j)
             stageManager.stage[i][j].img:removeSelf()
             print(GM.GemName[gemSave[i][j]])
+            stageManager.stage[i][j].color = GM.Color[gemSave[i][j]]
             stageManager.stage[i][j].img = display.newImage( sceneGroup, GM.SpritePath..GM.GemName[gemSave[i][j]], posX, posY )
         end
     end
 
-    local function checkContinue(event)
-        gemIdx = gemIdx+1
-
-        if gemIdx <= #moveSave then
-            doPlayback()
-        else
-            stageManager:EliminateGem()
-        end        
-    end
-
-    local function otherGemMove(event)
-        local postPos = moveSave[gemIdx]
-        local destGem = stageManager.stage[postPos[2]][postPos[1]].img
-        local preX, preY = stageManager.stageToWorldPos(moveSave[gemIdx-1][2], moveSave[gemIdx-1][1])
-        transition.to( destGem, {time=GM.playbackMoveDuration, x=preX, y=preY} )
-    end
-
-    local function firstGemMove(event)
-        local firstPos = moveSave[1]
-        local firstGem = stageManager.stage[firstPos[2]][firstPos[1]].img        
-        local postX, postY = stageManager.stageToWorldPos(moveSave[gemIdx][2], moveSave[gemIdx][1])
-        transition.to( firstGem, {time=GM.playbackMoveDuration, x=postX, y=postY, onComplete=checkContinue} )
-    end
-
-    function doPlayback()
-        local moveDelay = 0
-        local firstPos = moveSave[1]
-        local firstGem = stageManager.stage[firstPos[2]][firstPos[1]].img        
-
-        if gemIdx <= 2 then
-            moveDelay = GM.playbackMoveDuration
-            firstGem:toFront()
+    function checkContinue()
+        if moveGemIdx == 1 then            
+            moveDelay = 0
         end
 
-        timer.performWithDelay( moveDelay, firstGemMove )
-        timer.performWithDelay( moveDelay+GM.playbackMoveDuration*0.4, otherGemMove )
+        if moveGemIdx+1 < #moveSave then
+            moveGemIdx = moveGemIdx+1
+            startPlayback()
+        else
+            stageManager:EliminateGem()
+        end
     end
 
-    doPlayback()
+    function gemSwap(event)        
+        stageManager:GemSwap(moveSave[moveGemIdx][2], moveSave[moveGemIdx][1], moveSave[moveGemIdx+1][2], moveSave[moveGemIdx+1][1])        
+    end
+
+    function gemMove(event)
+        local movePos = moveSave[moveGemIdx]
+        local moveGem = stageManager.stage[movePos[2]][movePos[1]].img
+        local postX, postY = stageManager.stageToWorldPos(moveSave[moveGemIdx+1][2], moveSave[moveGemIdx+1][1])
+        if moveGemIdx == 1 then
+            moveGem:toFront()
+        end
+        transition.to( moveGem, {time=GM.playbackMoveDuration, x=postX, y=postY, onComplete=checkContinue} )
+    end
+
+    function startPlayback()
+        timer.performWithDelay( moveDelay, gemMove )
+        timer.performWithDelay( moveDelay+swapDelay, gemSwap )
+    end    
+
+    startPlayback()
+
+    -- local function checkContinue(event)
+    --     gemIdx = gemIdx+1
+
+    --     if gemIdx <= #moveSave then
+    --         doPlayback()
+    --     else
+    --         stageManager:EliminateGem()
+    --     end        
+    -- end
+
+    -- local function otherGemMove(event)
+    --     local postPos = moveSave[gemIdx]
+    --     local destGem = stageManager.stage[postPos[2]][postPos[1]].img
+    --     local preX, preY = stageManager.stageToWorldPos(moveSave[gemIdx-1][2], moveSave[gemIdx-1][1])
+    --     transition.to( destGem, {time=GM.playbackMoveDuration, x=preX, y=preY} )
+    -- end
+
+    -- local function firstGemMove(event)
+    --     local firstPos = moveSave[1]
+    --     local firstGem = stageManager.stage[firstPos[2]][firstPos[1]].img        
+    --     local postX, postY = stageManager.stageToWorldPos(moveSave[gemIdx][2], moveSave[gemIdx][1])
+    --     transition.to( firstGem, {time=GM.playbackMoveDuration, x=postX, y=postY, onComplete=checkContinue} )
+    -- end
+
+    -- function doPlayback()
+    --     local moveDelay = 0
+    --     local firstPos = moveSave[1]
+    --     local firstGem = stageManager.stage[firstPos[2]][firstPos[1]].img
+
+    --     if gemIdx <= 2 then
+    --         moveDelay = GM.playbackMoveDuration
+    --         firstGem:toFront()
+    --     end
+
+    --     timer.performWithDelay( moveDelay, firstGemMove )
+    --     timer.performWithDelay( moveDelay+GM.playbackMoveDuration*0.4, otherGemMove )
+    -- end
+
+    -- doPlayback()
 end
 
 -- 更新消耗記憶體
