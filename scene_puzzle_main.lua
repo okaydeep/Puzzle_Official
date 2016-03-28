@@ -29,6 +29,7 @@ local collidedGemI
 local collidedGemJ
 
 local myCircle
+local gemSample
 
 -- Line Group
 local lineGroup
@@ -532,7 +533,13 @@ function scene:show( event )
             locatePoint = locatePoint or { }
             locatePoint[i] = lPoint
         end
-        
+
+        -- Color Sample example
+        gemSample = display.newImageRect("img/gemSample.png", 600, 490)
+        gemSample.x = display.contentCenterX
+        gemSample.y = display.contentCenterY
+        GM.DoColorSample(gemSample.x, gemSample.y)
+
     elseif phase == "did" then
         
     end
