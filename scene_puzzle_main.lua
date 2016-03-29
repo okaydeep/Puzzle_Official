@@ -153,105 +153,91 @@ function gemDrag( event )
             local moveX = event.x-gX
             local moveY = event.y-gY
 
-            -- 水平移動
-            if moveX >= GM.gemWidth*0.5 then
-                if touchedGemJ >= 6 then collidedGemJ = touchedGemJ return end
-
-                if moveY >= GM.gemHeight*GM.touchAreaCoe then
-                    if touchedGemI < 5 then
-                        collidedGemI = touchedGemI+1
-                    else
-                        collidedGemI = touchedGemI
-                    end                    
-                elseif moveY < GM.gemHeight*GM.touchAreaCoe and moveY > GM.gemHeight*(-GM.touchAreaCoe) then
+            -- 分九宮格, 從下方開始
+            if moveY >= GM.gemHeight*(1-GM.touchAreaCoe) then
+                -- 下方邊界判定
+                if touchedGemI >= 5 then
                     collidedGemI = touchedGemI
-                elseif moveY <= GM.gemHeight*(-GM.touchAreaCoe) then
-                    if touchedGemI > 1 then
-                        collidedGemI = touchedGemI-1
-                    else
-                        collidedGemI = touchedGemI
-                    end                    
+                else
+                    collidedGemI = touchedGemI+1
                 end
 
-                collidedGemJ = touchedGemJ+1
-
-            elseif moveX <= GM.gemWidth*(-0.5) then
-                if touchedGemJ <= 1 then collidedGemJ = touchedGemJ return end
-
-                if moveY >= GM.gemHeight*GM.touchAreaCoe then
-                    if touchedGemI < 5 then
-                        collidedGemI = touchedGemI+1
+                -- 直行判斷
+                if moveX >= GM.gemWidth*(1-GM.touchAreaCoe) then
+                    if touchedGemJ >= 6 then
+                        collidedGemJ = touchedGemJ
                     else
-                        collidedGemI = touchedGemI
-                    end                    
-                elseif moveY < GM.gemHeight*GM.touchAreaCoe and moveY > GM.gemHeight*(-GM.touchAreaCoe) then
+                        collidedGemJ = touchedGemJ+1    
+                    end
+                elseif moveX <= GM.gemWidth*GM.touchAreaCoe and moveX >= GM.gemWidth*(-GM.touchAreaCoe) then
+                    collidedGemJ = touchedGemJ
+                elseif moveX <= GM.gemWidth*(-1+GM.touchAreaCoe) then
+                    if touchedGemJ <= 1 then
+                        collidedGemJ = touchedGemJ
+                    else
+                        collidedGemJ = touchedGemJ-1    
+                    end
+                end
+
+            -- 中間
+            elseif moveY <= GM.gemHeight*GM.touchAreaCoe and  moveY >= GM.gemHeight*(-GM.touchAreaCoe) then
+                collidedGemI = touchedGemI
+
+                -- 直行判斷
+                if moveX >= GM.gemWidth*(1-GM.touchAreaCoe) then
+                    if touchedGemJ >= 6 then
+                        collidedGemJ = touchedGemJ
+                    else
+                        collidedGemJ = touchedGemJ+1    
+                    end
+                elseif moveX <= GM.gemWidth*GM.touchAreaCoe and moveX >= GM.gemWidth*(-GM.touchAreaCoe) then
+                    -- 無珠子碰撞
+                    collidedGemI = nil                    
+                    collidedGemJ = nil
+                elseif moveX <= GM.gemWidth*(-1+GM.touchAreaCoe) then
+                    if touchedGemJ <= 1 then
+                        collidedGemJ = touchedGemJ
+                    else
+                        collidedGemJ = touchedGemJ-1    
+                    end
+                end
+
+            -- 上方
+            elseif moveY <= GM.gemHeight*(-1+GM.touchAreaCoe) then
+                -- 上方邊界判定
+                if touchedGemI <= 1 then
                     collidedGemI = touchedGemI
-                elseif moveY <= GM.gemHeight*(-GM.touchAreaCoe) then
-                    if touchedGemI > 1 then
-                        collidedGemI = touchedGemI-1
-                    else
-                        collidedGemI = touchedGemI
-                    end                    
+                else
+                    collidedGemI = touchedGemI-1
                 end
 
-                collidedGemJ = touchedGemJ-1
-
-            end
-
-            -- 垂直移動
-            if moveY >= GM.gemHeight*0.5 then
-                if touchedGemI >= 5 then collidedGemI = touchedGemI return end
-
-                if moveX >= GM.gemWidth*GM.touchAreaCoe then
-                    if touchedGemJ < 6 then
-                        collidedGemJ = touchedGemJ+1
-                    else
+                -- 直行判斷
+                if moveX >= GM.gemWidth*(1-GM.touchAreaCoe) then
+                    if touchedGemJ >= 6 then
                         collidedGemJ = touchedGemJ
-                    end                    
-                elseif moveX < GM.gemWidth*GM.touchAreaCoe and moveX > GM.gemWidth*(-GM.touchAreaCoe) then
+                    else
+                        collidedGemJ = touchedGemJ+1    
+                    end
+                elseif moveX <= GM.gemWidth*GM.touchAreaCoe and moveX >= GM.gemWidth*(-GM.touchAreaCoe) then
                     collidedGemJ = touchedGemJ
-                elseif moveX <= GM.gemWidth*(-GM.touchAreaCoe) then
-                    if touchedGemJ > 1 then
-                        collidedGemJ = touchedGemJ-1
-                    else
+                elseif moveX <= GM.gemWidth*(-1+GM.touchAreaCoe) then
+                    if touchedGemJ <= 1 then
                         collidedGemJ = touchedGemJ
-                    end                    
+                    else
+                        collidedGemJ = touchedGemJ-1    
+                    end
                 end
-
-                collidedGemI = touchedGemI+1
-
-            elseif moveY <= GM.gemHeight*(-0.5) then
-                if touchedGemI <= 1 then collidedGemI = touchedGemI return end
-                
-                if moveX >= GM.gemWidth*GM.touchAreaCoe then
-                    if touchedGemJ < 5 then
-                        collidedGemJ = touchedGemJ+1
-                    else
-                        collidedGemJ = touchedGemJ
-                    end                    
-                elseif moveX < GM.gemWidth*GM.touchAreaCoe and moveX > GM.gemWidth*(-GM.touchAreaCoe) then
-                    collidedGemJ = touchedGemJ
-                elseif moveX <= GM.gemWidth*(-GM.touchAreaCoe) then
-                    if touchedGemJ > 1 then
-                        collidedGemJ = touchedGemJ-1
-                    else
-                        collidedGemJ = touchedGemJ
-                    end                    
-                end
-
-                collidedGemI = touchedGemI-1
-
-            end
+            end                
 
             -- 如果有觸碰到其它gem
-            if collidedGemI ~= nil and collidedGemJ ~= nil then                
+            if collidedGemI ~= nil and collidedGemJ ~= nil then
                 stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)
                 touchedGemJ = collidedGemJ
                 touchedGemI = collidedGemI                
                 collidedGemI = nil
                 collidedGemJ = nil
                 moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
-                print(#moveSave)
+                --print(#moveSave)
             end
 
             myCircle.x = event.x
@@ -282,14 +268,14 @@ function playback()
     end
 
     for i,v in ipairs(moveSave) do
-        print(i,v)
+        --print(i,v)
     end
 
     for i=1, 5 do
         for j=1, 6 do            
             local posX, posY = stageManager.stageToWorldPos(i, j)
             stageManager.stage[i][j].img:removeSelf()
-            print(GM.GemName[gemSave[i][j]])
+            --print(GM.GemName[gemSave[i][j]])
             stageManager.stage[i][j].color = GM.Color[gemSave[i][j]]
             stageManager.stage[i][j].img = display.newImage( sceneGroup, GM.SpritePath..GM.GemName[gemSave[i][j]], posX, posY )
         end
