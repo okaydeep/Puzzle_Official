@@ -11,7 +11,7 @@ end
 
 _.SpritePath = "img/sprite/"
 
-_.ButtonName = { "Regenerate", "Play back" }
+_.ButtonName = { "Regenerate", "Play back", "Load Image" }
 _.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", "gem_purple.png", "gem_pink.png" }
 _.Color = { "red", "orange", "green", "blue", "purple", "pink" }
 _.ColorIdxArr = { 1, 2, 3, 4, 5, 6 }
@@ -93,7 +93,18 @@ function _.onColorSample( event )
 	GlobalManager.ColorB[#(GlobalManager.ColorB)+1] = event.b      
 end
 
-function _.DoColorSample(centerX, centerY)
+function _.DoColorSample(VerticalIdx, HorizontalIdx)
+	local xOffset, yOffset, finalPosX, finalPosY = 0, 0, 0, 0
+	local sumColorR, sumColorG, sumColorB = 0, 0, 0
+	local avgColorR, avgColorG, avgColorB = 0, 0, 0
+
+	xOffset = HorizontalIdx-3
+	yOffset = VerticalIdx-3
+	finalPosX = display.contentCenterX-50+(xOffset*100)
+	finalPosY = display.contentCenterY+(yOffset*98)
+
+	-- print(finalPosX, finalPosY)
+
 	if #(GlobalManager.ColorR) > 0 then
 		GlobalManager.ColorR = nil
 		GlobalManager.ColorR = { }
@@ -109,23 +120,80 @@ function _.DoColorSample(centerX, centerY)
 		GlobalManager.ColorB = { }
 	end
 
-	display.colorSample( centerX, centerY, GlobalManager.onColorSample )
-	display.colorSample( centerX+10, centerY+10, GlobalManager.onColorSample )
-	display.colorSample( centerX-10, centerY+10, GlobalManager.onColorSample )
-	display.colorSample( centerX-10, centerY-10, GlobalManager.onColorSample )
-	display.colorSample( centerX+10, centerY-10, GlobalManager.onColorSample )
+	-- 九個取樣點
+	display.colorSample( finalPosX, finalPosY, GlobalManager.onColorSample )
+	display.colorSample( finalPosX+10, finalPosY+10, GlobalManager.onColorSample )
+	display.colorSample( finalPosX, finalPosY+10, GlobalManager.onColorSample )
+	display.colorSample( finalPosX-10, finalPosY+10, GlobalManager.onColorSample )
+	display.colorSample( finalPosX-10, finalPosY, GlobalManager.onColorSample )
+	display.colorSample( finalPosX-10, finalPosY-10, GlobalManager.onColorSample )
+	display.colorSample( finalPosX, finalPosY-10, GlobalManager.onColorSample )
+	display.colorSample( finalPosX+10, finalPosY-10, GlobalManager.onColorSample )
+	display.colorSample( finalPosX+10, finalPosY, GlobalManager.onColorSample )
 
-	local averColorR, averColorG, averColorB = 0, 0, 0
-
-	for i=1, 5 do
-		averColorR = averColorR+GlobalManager.ColorR[i]
-		averColorG = averColorG+GlobalManager.ColorG[i]
-		averColorB = averColorB+GlobalManager.ColorB[i]
+	for i=1, #(GlobalManager.ColorR) do
+		sumColorR = sumColorR+GlobalManager.ColorR[i]
+		sumColorG = sumColorG+GlobalManager.ColorG[i]
+		sumColorB = sumColorB+GlobalManager.ColorB[i]
 	end
 
-	print ( "Average Red: " .. averColorR*0.2 )
-	print ( "Average Green: " .. averColorG*0.2 )
-	print ( "Average Blue: " .. averColorB*0.2 )
+	avgColorR = sumColorR*(1/#(GlobalManager.ColorR))
+	avgColorG = sumColorG*(1/#(GlobalManager.ColorR))
+	avgColorB = sumColorB*(1/#(GlobalManager.ColorR))
+
+	-- print ( string.format("RedAVG: %.2f, GreenAVG: %.2f, BlueAVG: %.2f",
+	-- 	avgColorR,
+	-- 	avgColorG,
+	-- 	avgColorB ) )
+
+	print( GlobalManager.Color[GlobalManager.getColorByRGB(avgColorR, avgColorG, avgColorB)] )
+	-- print ( string.format("Aver Green: %.2f", averColorG*(1/#(GlobalManager.ColorR)) ) )
+	-- print ( string.format("Aver Blue: %.2f", averColorB*(1/#(GlobalManager.ColorR) ) ) )
+end
+
+function _.getColorByRGB(r, g, b)
+	local colorIdx = 0
+
+	if r < 1.0 and r > 0.65 then
+		if g < 0.6 and g > 0.3 then
+			if b < 0.5 and b >0.2 then
+				-- red
+				colorIdx = 1
+			end
+		elseif g < 1.0 and g > 0.7 then
+			if b < 0.55 and b > 0.25 then
+				-- orange
+				colorIdx = 2
+			end
+		elseif g < 0.3 and g > 0.0 then
+			if b < 0.7 and b > 0.4 then
+				-- pink
+				colorIdx = 6
+			end
+		end
+	elseif r < 0.65 and r > 0.2 then
+		if g < 0.9 and g > 0.6 then
+			if b < 0.55 and b > 0.25 then
+				-- green
+				colorIdx = 3
+			elseif b < 1.0 and b > 0.7 then
+				-- blue
+				colorIdx = 4
+			end
+		elseif g < 0.4 and g > 0.1 then
+			if b < 0.65 and b > 0.35 then
+				-- purple
+				colorIdx = 5
+			end
+		end
+	end
+
+	if colorIdx == 0 then
+		print("No similiar color sample: R:" .. r .. " G:" .. g .. " B:" .. b .. "\nUsing default red instead")
+		colorIdx = 1
+	end
+
+	return colorIdx
 end
 
 function print_r ( t )  

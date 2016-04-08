@@ -20,6 +20,7 @@ local scene = composer.newScene( sceneName )
 
 local GM
 local stageManager
+local loadImgCoroutine
 
 local directionArr
 
@@ -48,6 +49,12 @@ local moveSave
 -- For Debug
 local systemMemUsed
 local textureMemUsed
+local statuTitle
+local currentStatus
+local loadingProgress
+local loadingTotalAmount
+local tmpTable
+local processIdx
 
 -----------------------------------------------------------------------------------------------------------------------------
 --
@@ -255,6 +262,70 @@ function gemDrag( event )
     return true
 end
 
+function colorSampleTouch( event )
+    local t = event.target
+    local phase = event.phase
+
+    if "began" == phase then
+        display.getCurrentStage():setFocus( t )
+        t.isFocus = true
+        GM.DoColorSample(event.x, event.y)
+    elseif t.isFocus then
+        if "moved" == phase then
+        elseif "ended" == phase or "cancelled" == phase then
+            display.getCurrentStage():setFocus( nil )
+            t.isFocus = false
+        end
+    end
+end
+
+-- 讀取分析圖片
+function loadImg()        
+    loadingTotalAmount = 6*5
+    processIdx = 1
+
+    local co = coroutine.create(doLoadImage)
+    for i=1, loadingTotalAmount do
+        timer.performWithDelay( 50*i, function() coroutine.resume(co) end)
+    end
+    
+    updateStatus(processIdx)
+    -- GM.DoColorSample(4, 1, updateStatus)
+    -- GM.DoColorSample(2, 2, updateStatus)
+    -- GM.DoColorSample(2, 1, updateStatus)
+    -- GM.DoColorSample(1, 1, updateStatus)
+    -- GM.DoColorSample(1, 3, updateStatus)
+end
+
+-- 讀取分析圖片協程
+function doLoadImage()
+    local idx, vIdx, hIdx = 0, 0, 0
+    while true do        
+        idx = processIdx
+        vIdx = math.floor(idx/7)+1
+        hIdx = (idx-1)%6+1
+
+        updateStatus(idx)
+        GM.DoColorSample(vIdx, hIdx)
+        processIdx = processIdx+1
+
+        -- if processIdx > loadingTotalAmount then
+        --     print("end")
+        --     break
+        -- end
+        coroutine.yield()
+    end
+end
+
+-- 更新狀態文字
+function updateStatus(loadingIdx)
+    if loadingIdx <= loadingTotalAmount then        
+        currentStatus.text = currentTitle .. string.format("Loading...%.1f%%", (loadingIdx/loadingTotalAmount*100))
+    else
+        currentStatus.text = currentTitle .. "Loading...Finished"
+    end
+end
+
 -- 回放功能
 function playback()
     local sceneGroup = scene.view
@@ -413,9 +484,11 @@ function buttonEvent(event)
     elseif phase == "ended" then
         if target.id == 1 then
             local colorIdxArr = {1, 2, 3, 4}
-            stageManager:GenerateGem(scene.view, colorIdxArr, false, gemDrag)
+            stageManager:GenerateGem(scene.view, colorIdxArr, false, gemDrag)            
         elseif target.id == 2 then
             playback()
+        elseif target.id == 3 then
+            loadImg()
         end
     end
 end
@@ -432,6 +505,9 @@ function scene:create( event )
 
     myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
     myCircle.isVisable = false
+
+    currentTitle = "Current Status: "
+    loadingProgress = 0
 end
 
 function scene:show( event )
@@ -488,6 +564,11 @@ function scene:show( event )
         textureMemUsed.y = 25
         systemMemUsed:setFillColor( 1, 1, 1 )
 
+        currentStatus = display.newText( options )
+        currentStatus.text = "Current Status: "
+        currentStatus.y = 50
+        currentStatus:setFillColor( 1, 1, 1 )
+
         if (system.getInfo("environment") == "simulator") then
             Runtime:addEventListener( "enterFrame", updateMemUsage)
         end
@@ -524,7 +605,9 @@ function scene:show( event )
         gemSample = display.newImageRect("img/gemSample.png", 600, 490)
         gemSample.x = display.contentCenterX
         gemSample.y = display.contentCenterY
-        GM.DoColorSample(gemSample.x, gemSample.y)
+        --gemSample:addEventListener("touch", colorSampleTouch)
+
+        
 
     elseif phase == "did" then
         

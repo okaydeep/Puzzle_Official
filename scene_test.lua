@@ -20,7 +20,19 @@ local bigTable
 
 function scene:create( event )
     local sceneGroup = self.view
-    
+
+    local co = coroutine.create(function()
+        local idx = 1
+        while true do
+            print(idx.."!!")
+            idx = idx+1
+            coroutine.yield()
+        end
+    end)
+
+    for i=1, 10 do
+        coroutine.resume(co)
+    end
 end
 
 function scene:show( event )
