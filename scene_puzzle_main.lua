@@ -20,7 +20,6 @@ local scene = composer.newScene( sceneName )
 
 local GM
 local stageManager
-local loadImgCoroutine
 
 local directionArr
 
@@ -31,6 +30,7 @@ local collidedGemJ
 
 local myCircle
 local gemSample
+local imgForParse
 
 -- Line Group
 local lineGroup
@@ -269,7 +269,7 @@ function colorSampleTouch( event )
     if "began" == phase then
         display.getCurrentStage():setFocus( t )
         t.isFocus = true
-        GM.DoColorSample(event.x, event.y)
+        GM:DoColorSample(event.x, event.y)
     elseif t.isFocus then
         if "moved" == phase then
         elseif "ended" == phase or "cancelled" == phase then
@@ -280,50 +280,68 @@ function colorSampleTouch( event )
 end
 
 -- 讀取分析圖片
-function loadImg()        
+function loadImage()
+    GM.loadFromImage = true
     loadingTotalAmount = 6*5
-    processIdx = 1
-
-    local co = coroutine.create(doLoadImage)
-    for i=1, loadingTotalAmount do
-        timer.performWithDelay( 50*i, function() coroutine.resume(co) end)
-    end
-    
-    updateStatus(processIdx)
-    -- GM.DoColorSample(4, 1, updateStatus)
-    -- GM.DoColorSample(2, 2, updateStatus)
-    -- GM.DoColorSample(2, 1, updateStatus)
-    -- GM.DoColorSample(1, 1, updateStatus)
-    -- GM.DoColorSample(1, 3, updateStatus)
+    processIdx = 1    
+    doLoadImage()
 end
 
--- 讀取分析圖片協程
-function doLoadImage()
-    local idx, vIdx, hIdx = 0, 0, 0
-    while true do        
-        idx = processIdx
-        vIdx = math.floor(idx/7)+1
+function loadImageFinished()    
+    GM.loadFromImage = false        
+    stageManager:GenerateGem(scene.view, nil, GM.parsedColor, false, gemDrag)
+    imgForParse.isVisible = false
+    -- gemSample.isVisible = false
+    -- gemSample.x = display.contentCenterX
+    -- gemSample.y = display.contentCenterY+300
+end
+
+-- 讀取分析圖片(使用計時器延遲呼叫)
+function doLoadImage()    
+    updateStatus()
+
+    -- 讀取結束
+    -- if processIdx > loadingTotalAmount then
+    --     GM.loadFromImage = false        
+    --     stageManager:GenerateGem(scene.view, nil, GM.parsedColor, false, gemDrag)
+    --     gemSample.isVisible = false
+    --     gemSample.x = display.contentCenterX
+    --     gemSample.y = display.contentCenterY+300
+    --     return
+    -- end    
+    
+    timer.performWithDelay(1, function()
+        local idx, vIdx, hIdx = 0, 0, 0
+        idx = processIdx    
+        vIdx = math.floor((idx-1)/6)+1
         hIdx = (idx-1)%6+1
-
-        updateStatus(idx)
-        GM.DoColorSample(vIdx, hIdx)
         processIdx = processIdx+1
+        if processIdx <= loadingTotalAmount then
+            GM.parseColorCallback[1] = doLoadImage
+        else
+            updateStatus()
+            GM.parseColorCallback[1] = loadImageFinished
+        end
+        GM:DoColorSample(vIdx, hIdx)
+    end)
 
-        -- if processIdx > loadingTotalAmount then
-        --     print("end")
-        --     break
-        -- end
-        coroutine.yield()
-    end
+    -- Color sample 無法直接連續使用    
+    -- timer.performWithDelay( 50, doLoadImage )
 end
 
 -- 更新狀態文字
-function updateStatus(loadingIdx)
-    if loadingIdx <= loadingTotalAmount then        
-        currentStatus.text = currentTitle .. string.format("Loading...%.1f%%", (loadingIdx/loadingTotalAmount*100))
+function updateStatus()
+    local loadingIdx = processIdx    
+    if loadingIdx <= loadingTotalAmount then
+        setStatus( string.format("Loading...%.1f%%", (loadingIdx/loadingTotalAmount*100)) )
     else
-        currentStatus.text = currentTitle .. "Loading...Finished"
+        setStatus( "Loading...Finished" )
     end
+end
+
+-- 設定狀態文字
+function setStatus(content)
+    currentStatus.text = currentTitle .. content
 end
 
 -- 回放功能
@@ -441,30 +459,59 @@ function showGemInfo( gemI, gemJ )
     print(stageManager.stage[gemI][gemJ].stagePos.y, stageManager.stage[gemI][gemJ].stagePos.x, stageManager.stage[gemI][gemJ].color)
 end
 
--- Test
+-- 選取照片callback
 function selectPhotoCallback(event)
     local photo = event.target
 
     if photo then
-        local photoW, photoH = photo.width, photo.height
-        local photoImg = display.newImageRect(sceneGroup, photo, 200, 200)
+        -- local wRatio = display.contentWidth/photo.width
+        imgForParse = photo
+        local ratio = GM.PAD_scaleRatio
+        photo:scale(ratio, ratio)
+        photo.x = display.contentCenterX
+        photo.y = display.contentCenterY
+        loadImage()
+        -- timer.performWithDelay(1000*5, function() photo.isVisible=false end)
+        
+        -- setStatus("photo height: " .. photo.height .. ", display contentHeight: " .. display.contentHeight ..
+        --     ",\nphoto width: " .. photo.width .. ", display contentWidth: " .. display.contentWidth)
     end
 end
 
--- Test
+-- 選取照片
 function selectPhoto()
     if media.hasSource( media.PhotoLibrary ) then
-        media.selectPhoto(
-        {
-            mediaSource = media.SavedPhotosAlbum,
-            listener = selectPhotoCallback            
-        })
+        if GM.parsedColor ~= nil and #(GM.parsedColor[1]) > 0 then
+            local alert = native.showAlert( "Corona", "已有參考圖片, 重新讀取新的圖片嗎?", { "是", "否, 使用舊圖" }, onSelectPhotoCompleted )
+        else            
+            media.selectPhoto(
+            {
+                mediaSource = media.SavedPhotosAlbum,
+                listener = selectPhotoCallback            
+            })
+        end
     else
        native.showAlert( "Corona", "This device does not have a photo library.", { "OK" } )
     end
 end
 
--- 按鈕事件, id: 1:重新產生, 2:播放回放,
+-- 選取照片按鈕事件
+function onSelectPhotoCompleted( event )
+    if ( event.action == "clicked" ) then
+        local i = event.index
+        if ( i == 1 ) then
+            media.selectPhoto(
+            {
+                mediaSource = media.SavedPhotosAlbum,
+                listener = selectPhotoCallback            
+            })
+        elseif ( i == 2 ) then
+            stageManager:GenerateGem(scene.view, nil, GM.parsedColor, false, gemDrag)
+        end
+    end
+end
+
+-- 按鈕事件, id: 1:重新產生, 2:播放回放, 3:選取照片
 function buttonEvent(event)
     local target = event.target
     local phase = event.phase
@@ -484,11 +531,12 @@ function buttonEvent(event)
     elseif phase == "ended" then
         if target.id == 1 then
             local colorIdxArr = {1, 2, 3, 4}
-            stageManager:GenerateGem(scene.view, colorIdxArr, false, gemDrag)            
+            stageManager:GenerateGem(scene.view, colorIdxArr, nil, false, gemDrag)
         elseif target.id == 2 then
             playback()
         elseif target.id == 3 then
-            loadImg()
+            -- loadImage()
+            selectPhoto()
         end
     end
 end
@@ -504,7 +552,7 @@ function scene:create( event )
     lineGroup = display.newGroup()
 
     myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
-    myCircle.isVisable = false
+    myCircle.isVisible = false
 
     currentTitle = "Current Status: "
     loadingProgress = 0
@@ -586,28 +634,49 @@ function scene:show( event )
             )
 
             btns[i].x = 180*i
-            btns[i].y = display.contentHeight-100
+            btns[i].y = -100
             btns[i]:setLabel(GM.ButtonName[i])
         end
 
         -- 截圖的定位點
-        local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }
+        -- local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }
 
-        for i=1, #GM.LocatePointDir do
-            local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], GM.touchRadius*0.5 )
-            lPoint.dir = GM.LocatePointDir[i]
-            lPoint:addEventListener("touch", locatePointMove)
-            locatePoint = locatePoint or { }
-            locatePoint[i] = lPoint
-        end
+        -- for i=1, #GM.LocatePointDir do
+        --     local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], GM.touchRadius*0.5 )
+        --     lPoint.dir = GM.LocatePointDir[i]
+        --     lPoint:addEventListener("touch", locatePointMove)
+        --     locatePoint = locatePoint or { }
+        --     locatePoint[i] = lPoint
+        -- end
 
-        -- Color Sample example
-        gemSample = display.newImageRect("img/gemSample.png", 600, 490)
-        gemSample.x = display.contentCenterX
-        gemSample.y = display.contentCenterY
-        --gemSample:addEventListener("touch", colorSampleTouch)
-
+        -- Color Sample測試
+        -- local scaleRatio = display.contentHeight/1920
         
+        -- gemSample = display.newImageRect("img/tmp.png", 1080*scaleRatio, 1920*scaleRatio)        
+        -- gemSample.x = display.contentCenterX
+        -- gemSample.y = display.contentCenterY
+        -- gemSample:addEventListener("touch", colorSampleTouch)
+
+        -- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
+        -- local yOffset = (1080*scaleRatio)/6
+        -- display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
+        -- imgForParse = gemSample        
+
+        -- Create the widget
+
+        local progressView = widget.newProgressView(
+            {
+                left = 50,
+                top = 200,
+                width = 220,
+                isAnimated = true
+            }
+        )
+
+        -- Set the progress to 50%
+        progressView:setProgress( 0.01 )
+
+        timer.performWithDelay(2000, function() progressView:setProgress(1) end)
 
     elseif phase == "did" then
         

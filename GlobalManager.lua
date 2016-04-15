@@ -35,6 +35,7 @@ _.btnDefaultOption = {
               }
 
 _.canTouch = true
+_.loadFromImage = false
 
 _.touchRadius = 40
 _.touchAreaCoe = 0.3	-- 觸碰範圍係數, 0.5是預設, 越小越好斜轉
@@ -52,9 +53,25 @@ _.dropDuration = 350
 -- 回放珠子移動時間(每格)
 _.playbackMoveDuration = 250
 
+-- PAD截圖預設位置
+_.PAD_scaleRatio = display.contentHeight/1920
+_.PAD_parseStartPosX = display.contentCenterX-576*0.5+3
+_.PAD_parseStartPosY = display.contentCenterY-57
+_.PAD_parseXOffset = (1080*_.PAD_scaleRatio)/6-1
+_.PAD_parseYOffset = (1080*_.PAD_scaleRatio)/6-1
+
 _.ColorR = { }
 _.ColorG = { }
 _.ColorB = { }
+_.parsedColor = {
+	{ },
+	{ },
+	{ },
+	{ },
+	{ }
+}
+
+_.parseColorCallback = { }
 
 -- 深層拷貝(可以複製table), object:欲複製的目標物件
 function _.deepCopy(object)
@@ -86,24 +103,24 @@ function _.onColorSample( event )
 	-- print( "R = " .. event.r )
 	-- print( "G = " .. event.g )
 	-- print( "B = " .. event.b )
-	-- print( "A = " .. event.a )	
+	-- print( "A = " .. event.a )
 
 	GlobalManager.ColorR[#(GlobalManager.ColorR)+1] = event.r
 	GlobalManager.ColorG[#(GlobalManager.ColorG)+1] = event.g
-	GlobalManager.ColorB[#(GlobalManager.ColorB)+1] = event.b      
+	GlobalManager.ColorB[#(GlobalManager.ColorB)+1] = event.b
 end
 
-function _.DoColorSample(VerticalIdx, HorizontalIdx)
+function _:DoColorSample(verticalIdx, horizontalIdx)
 	local xOffset, yOffset, finalPosX, finalPosY = 0, 0, 0, 0
 	local sumColorR, sumColorG, sumColorB = 0, 0, 0
 	local avgColorR, avgColorG, avgColorB = 0, 0, 0
 
-	xOffset = HorizontalIdx-3
-	yOffset = VerticalIdx-3
-	finalPosX = display.contentCenterX-50+(xOffset*100)
-	finalPosY = display.contentCenterY+(yOffset*98)
+	-- xOffset = horizontalIdx-3
+	-- yOffset = verticalIdx-3
 
-	-- print(finalPosX, finalPosY)
+	finalPosX = GlobalManager.PAD_parseStartPosX+GlobalManager.PAD_parseXOffset*0.5+(GlobalManager.PAD_parseXOffset*(horizontalIdx-1))
+	finalPosY = GlobalManager.PAD_parseStartPosY+GlobalManager.PAD_parseYOffset*0.5+(GlobalManager.PAD_parseYOffset*(verticalIdx-1))
+	-- display.newRect( finalPosX, finalPosY, 3, 3 )	-- 偵測位置測試點	
 
 	if #(GlobalManager.ColorR) > 0 then
 		GlobalManager.ColorR = nil
@@ -141,20 +158,23 @@ function _.DoColorSample(VerticalIdx, HorizontalIdx)
 	avgColorG = sumColorG*(1/#(GlobalManager.ColorR))
 	avgColorB = sumColorB*(1/#(GlobalManager.ColorR))
 
-	-- print ( string.format("RedAVG: %.2f, GreenAVG: %.2f, BlueAVG: %.2f",
-	-- 	avgColorR,
-	-- 	avgColorG,
-	-- 	avgColorB ) )
+	local colorIdx = GlobalManager.getColorByRGB(avgColorR, avgColorG, avgColorB)
+	-- print (verticalIdx .. "," .. horizontalIdx .. ": " .. colorIdx .. ". " .. avgColorR .. "," .. avgColorG .. "," .. avgColorB)	-- 分析顏色資訊
+	
+	self.parsedColor[verticalIdx][horizontalIdx] = colorIdx	
 
-	print( GlobalManager.Color[GlobalManager.getColorByRGB(avgColorR, avgColorG, avgColorB)] )
-	-- print ( string.format("Aver Green: %.2f", averColorG*(1/#(GlobalManager.ColorR)) ) )
-	-- print ( string.format("Aver Blue: %.2f", averColorB*(1/#(GlobalManager.ColorR) ) ) )
+	if #(GlobalManager.ColorR) >= 9 then
+		if type(GlobalManager.parseColorCallback[1]) == "function" then
+			GlobalManager.parseColorCallback[1]()
+			GlobalManager.parseColorCallback[1] = nil
+		end
+	end
 end
 
 function _.getColorByRGB(r, g, b)
 	local colorIdx = 0
 
-	if r < 1.0 and r > 0.65 then
+	if r < 1.0 and r > 0.75 then
 		if g < 0.6 and g > 0.3 then
 			if b < 0.5 and b >0.2 then
 				-- red
@@ -171,7 +191,7 @@ function _.getColorByRGB(r, g, b)
 				colorIdx = 6
 			end
 		end
-	elseif r < 0.65 and r > 0.2 then
+	elseif r < 0.75 and r > 0.2 then
 		if g < 0.9 and g > 0.6 then
 			if b < 0.55 and b > 0.25 then
 				-- green
@@ -180,8 +200,8 @@ function _.getColorByRGB(r, g, b)
 				-- blue
 				colorIdx = 4
 			end
-		elseif g < 0.4 and g > 0.1 then
-			if b < 0.65 and b > 0.35 then
+		elseif g < 0.6 and g > 0.1 then
+			if b < 0.8 and b > 0.4 then
 				-- purple
 				colorIdx = 5
 			end

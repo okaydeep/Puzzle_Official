@@ -16,11 +16,13 @@ function _:New(object)
 	return object
 end
 
-_.stage = { { },
-			{ },
-			{ },
-			{ },
-			{ } }
+_.stage = {
+	{ },
+	{ },
+	{ },
+	{ },
+	{ }
+}
 
 -- 新增gem到盤面群組裡, i:橫排, j:縱列, gem:新生成的gem table
 function _:AddGemToStage( i, j, gem )
@@ -335,12 +337,24 @@ function _:InitGem()
     end
 end
 
--- 產生盤面, colorIdxArr:盤面會出現的顏色引數陣列, connectionAllowed:允許預設連線
-function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )	
+-- 產生盤面,
+-- displayGroup:Image的group,
+-- colorIdxArr:盤面會出現的顏色引數陣列,
+-- parsedColor:分析圖片得到的顏色table
+-- connectionAllowed:允許預設連線,
+-- touchEvt:規定的觸碰事件,
+function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllowed, touchEvt )	
 	-- 迴圈跳出標準
-	local connected	
+	local connected
+	local colorIdxArr
 	local gemInitPosYOffset = { }
 	local posTable = self.GeneratePosTable()
+
+	if parsedColor == nil then		
+		colorIdxArr = colorIdxTable
+	else
+		colorIdxArr = {1, 2, 3, 4, 5, 6}
+	end
 
 	for j=1, 6 do		
 		for i=1, 5 do
@@ -369,9 +383,17 @@ function _:GenerateGem( displayGroup, colorIdxArr, connectionAllowed, touchEvt )
 
     		-- 如果gem種類為none
     		if gem.color == "none" then
-		    	local rand = math.random(1, #colorIdxArr)		    
-			    gem.color = GM.Color[colorIdxArr[rand]]
+    			local rand = -1
 
+    			-- 沒有參考資料, 隨機產生
+    			if parsedColor == nil then
+		    		rand = math.random(1, #colorIdxArr)
+		    	-- 如果有傳入分析圖片的顏色table
+		    	else
+		    		rand = parsedColor[i][j]		    		
+		    	end
+
+			    gem.color = GM.Color[colorIdxArr[rand]]
 			    --local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
 		    	gem.img = display.newImage( displayGroup, GM.SpritePath..GM.GemName[colorIdxArr[rand]], 0, -1000 )
 			end

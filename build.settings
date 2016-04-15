@@ -73,9 +73,17 @@ settings =
 	--
 	android =
 	{
+		permissions =
+		{
+			{ name = ".permission.C2D_MESSAGE", protectionLevel = "signature" },
+		},
 		usesPermissions =
 		{
 			"android.permission.INTERNET",
+			"android.permission.GET_ACCOUNTS",
+			"android.permission.RECEIVE_BOOT_COMPLETED",
+			"com.google.android.c2dm.permission.RECEIVE",
+			".permission.C2D_MESSAGE",
 		},
 	},
 }
