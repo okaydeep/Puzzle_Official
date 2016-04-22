@@ -5,8 +5,9 @@
 ---------------------------------------------------------------------------------
 
 require( "GlobalManager" )
-require( "Gem" )
 require( "StageManager" )
+require( "SoundManager" )
+require( "Gem" )
 
 local sceneName = ...
 
@@ -20,6 +21,7 @@ local scene = composer.newScene( sceneName )
 
 local GM
 local stageManager
+local soundManager
 
 local directionArr
 
@@ -35,8 +37,15 @@ local imgForParse
 -- Line Group
 local lineGroup
 
+-- ProgressBar Group
+local progressBarGroup
+
 -- 按鈕,
 local btns
+
+-- 進度條
+local progressView
+local progressText
 
 -- 定位點
 local locatePoint
@@ -51,7 +60,6 @@ local systemMemUsed
 local textureMemUsed
 local statuTitle
 local currentStatus
-local loadingProgress
 local loadingTotalAmount
 local tmpTable
 local processIdx
@@ -62,6 +70,31 @@ local processIdx
 --
 -----------------------------------------------------------------------------------------------------------------------------
 
+-- 顯示進度條, visible:是否顯示
+local function showProgressBar(visible)
+    if visible then
+        progressBarGroup:toFront()
+    else
+        progressBarGroup:toBack()
+    end
+
+    progressBarGroup.isVisible = visible
+end
+
+-- 更新進度條, prog:進度,範圍0.0~1.0
+local function updateProgress(prog)
+    if prog > 0.5 then
+        progressText:setFillColor( 1, 1, 1 )
+    elseif prog <= 0.5 then
+        progressText:setFillColor( 0, 0, 0 )
+    end
+
+    progressText.text = string.format("%.1f%%", prog*100)
+
+    progressView:setProgress(prog)    
+end
+
+-- 定位點移動 (目前無用)
 local function locatePointMove( event )
     local t = event.target
     local phase = event.phase
@@ -104,12 +137,6 @@ local function locatePointMove( event )
             t.isFocus = false
 
         end
-    end
-end
-
-local function handleButtonEvent( event )
-    if ( "ended" == event.phase ) then
-        print( "Button was pressed and released" )
     end
 end
 
@@ -262,6 +289,7 @@ function gemDrag( event )
     return true
 end
 
+-- 分析點擊位置的顏色 (目前無用)
 function colorSampleTouch( event )
     local t = event.target
     local phase = event.phase
@@ -287,8 +315,10 @@ function loadImage()
     doLoadImage()
 end
 
-function loadImageFinished()    
-    GM.loadFromImage = false        
+-- 讀取分析圖片完成處理
+function loadImageFinished()
+    showProgressBar(false)
+    GM.loadFromImage = false
     stageManager:GenerateGem(scene.view, nil, GM.parsedColor, false, gemDrag)
     imgForParse.isVisible = false
     -- gemSample.isVisible = false
@@ -331,9 +361,16 @@ end
 
 -- 更新狀態文字
 function updateStatus()
-    local loadingIdx = processIdx    
+    local loadingIdx = processIdx
+
+    showProgressBar(true)
+    local progress = loadingIdx/loadingTotalAmount
+    if progress > 1 then progress = 1 end
+
+    updateProgress(progress)
+
     if loadingIdx <= loadingTotalAmount then
-        setStatus( string.format("Loading...%.1f%%", (loadingIdx/loadingTotalAmount*100)) )
+        setStatus( string.format("Loading...%.1f%%", progress*100) )
     else
         setStatus( "Loading...Finished" )
     end
@@ -517,6 +554,8 @@ function buttonEvent(event)
     local phase = event.phase
 
     if phase == "began" then
+        soundManager:PlaySound("test01")
+
         if target.id == 1 then
 
         elseif target.id == 2 then
@@ -548,14 +587,17 @@ function scene:create( event )
     math.randomseed( os.time() )
     GM = GlobalManager:New(GM)
     stageManager = StageManager:New(stageManager)
+    soundManager = SoundManager:New(soundManager)
 
     lineGroup = display.newGroup()
+    progressBarGroup = display.newGroup()
 
     myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
     myCircle.isVisible = false
 
     currentTitle = "Current Status: "
-    loadingProgress = 0
+
+    soundManager:LoadSound("test01")
 end
 
 function scene:show( event )
@@ -634,7 +676,8 @@ function scene:show( event )
             )
 
             btns[i].x = 180*i
-            btns[i].y = -100
+            -- btns[i].y = display.contentHeight-28
+            btns[i].y = display.contentHeight+100
             btns[i]:setLabel(GM.ButtonName[i])
         end
 
@@ -652,7 +695,7 @@ function scene:show( event )
         -- Color Sample測試
         -- local scaleRatio = display.contentHeight/1920
         
-        -- gemSample = display.newImageRect("img/tmp.png", 1080*scaleRatio, 1920*scaleRatio)        
+        -- gemSample = display.newImageRect("img/tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
         -- gemSample.x = display.contentCenterX
         -- gemSample.y = display.contentCenterY
         -- gemSample:addEventListener("touch", colorSampleTouch)
@@ -660,23 +703,58 @@ function scene:show( event )
         -- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
         -- local yOffset = (1080*scaleRatio)/6
         -- display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
-        -- imgForParse = gemSample        
+        -- imgForParse = gemSample
 
-        -- Create the widget
-
-        local progressView = widget.newProgressView(
+        -- Progress bar initial
+        options = {
+            width = 64,
+            height = 64,
+            numFrames = 6,
+            sheetContentWidth = 384,
+            sheetContentHeight = 64
+        }
+        local progressSheet = graphics.newImageSheet( "/img/widget-progress-view02.png", options )
+        
+        progressView = widget.newProgressView(
             {
+                sheet = progressSheet,
+                fillOuterLeftFrame = 1,
+                fillOuterMiddleFrame = 2,
+                fillOuterRightFrame = 3,
+                fillOuterWidth = 64,
+                fillOuterHeight = 64,
+                fillInnerLeftFrame = 4,
+                fillInnerMiddleFrame = 5,
+                fillInnerRightFrame = 6,
+                fillWidth = 64,
+                fillHeight = 64,
+                x = display.contentCenterX,
+                y = display.contentCenterY,
                 left = 50,
                 top = 200,
-                width = 220,
-                isAnimated = true
+                width = 440,
+                isAnimated = false
             }
-        )
+        )        
 
-        -- Set the progress to 50%
-        progressView:setProgress( 0.01 )
+        options = {
+            text = "",
+            width = 600,     --required for multi-line and alignment
+            font = native.systemFontBold,   
+            fontSize = 20,
+            align = "center"  --new alignment parameter
+        }
 
-        timer.performWithDelay(2000, function() progressView:setProgress(1) end)
+        progressText = display.newText( options )
+        progressText.text = "0%"
+        progressText.x = display.contentCenterX
+        progressText.y = display.contentCenterY        
+        progressText:setFillColor( 1, 1, 1 )
+
+        progressBarGroup:insert(progressView)
+        progressBarGroup:insert(progressText)
+        progressBarGroup.isVisible = false
+        progressBarGroup.y = progressBarGroup.y-200
 
     elseif phase == "did" then
         

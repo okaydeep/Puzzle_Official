@@ -55,10 +55,13 @@ _.playbackMoveDuration = 250
 
 -- PAD截圖預設位置
 _.PAD_scaleRatio = display.contentHeight/1920
-_.PAD_parseStartPosX = display.contentCenterX-576*0.5+3
+--_.PAD_parseXOffset = (1080*_.PAD_scaleRatio)/6-1
+_.PAD_parseXOffset = 177*_.PAD_scaleRatio
+-- _.PAD_parseYOffset = (1080*_.PAD_scaleRatio)/6-1
+_.PAD_parseYOffset = 177*_.PAD_scaleRatio
+-- _.PAD_parseStartPosX = display.contentCenterX-576*0.5+3
+_.PAD_parseStartPosX = display.contentCenterX-_.PAD_parseXOffset*3
 _.PAD_parseStartPosY = display.contentCenterY-57
-_.PAD_parseXOffset = (1080*_.PAD_scaleRatio)/6-1
-_.PAD_parseYOffset = (1080*_.PAD_scaleRatio)/6-1
 
 _.ColorR = { }
 _.ColorG = { }
@@ -110,6 +113,7 @@ function _.onColorSample( event )
 	GlobalManager.ColorB[#(GlobalManager.ColorB)+1] = event.b
 end
 
+-- 分析顏色, verticalIdx:第幾橫排, horizontalIdx:第幾縱列
 function _:DoColorSample(verticalIdx, horizontalIdx)
 	local xOffset, yOffset, finalPosX, finalPosY = 0, 0, 0, 0
 	local sumColorR, sumColorG, sumColorB = 0, 0, 0
@@ -171,36 +175,37 @@ function _:DoColorSample(verticalIdx, horizontalIdx)
 	end
 end
 
+-- 分析平均顏色決定種類
 function _.getColorByRGB(r, g, b)
 	local colorIdx = 0
 
-	if r < 1.0 and r > 0.75 then
-		if g < 0.6 and g > 0.3 then
-			if b < 0.5 and b >0.2 then
+	if r > 0.8 then
+		if g < 0.7 and g > 0.4 then
+			if b < 0.6 and b > 0.2 then
 				-- red
 				colorIdx = 1
 			end
 		elseif g < 1.0 and g > 0.7 then
-			if b < 0.55 and b > 0.25 then
+			if b < 0.6 and b > 0.2 then
 				-- orange
 				colorIdx = 2
 			end
-		elseif g < 0.3 and g > 0.0 then
-			if b < 0.7 and b > 0.4 then
+		elseif g < 0.4 and g > 0.0 then
+			if b < 0.8 and b > 0.4 then
 				-- pink
 				colorIdx = 6
 			end
 		end
-	elseif r < 0.75 and r > 0.2 then
-		if g < 0.9 and g > 0.6 then
-			if b < 0.55 and b > 0.25 then
+	elseif r < 0.8 then
+		if g < 0.9 and g > 0.5 then
+			if b < 0.6 then
 				-- green
 				colorIdx = 3
-			elseif b < 1.0 and b > 0.7 then
+			elseif b > 0.6 then
 				-- blue
 				colorIdx = 4
 			end
-		elseif g < 0.6 and g > 0.1 then
+		elseif g < 0.5 then
 			if b < 0.8 and b > 0.4 then
 				-- purple
 				colorIdx = 5
