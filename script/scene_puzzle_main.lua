@@ -7,6 +7,7 @@
 require( "GlobalManager" )
 require( "StageManager" )
 require( "SoundManager" )
+require( "InfoManager" )
 require( "Gem" )
 
 local sceneName = ...
@@ -22,15 +23,13 @@ local scene = composer.newScene( sceneName )
 local GM
 local stageManager
 local soundManager
-
-local directionArr
+local infoManager
 
 local touchedGemI
 local touchedGemJ
 local collidedGemI
 local collidedGemJ
 
-local myCircle
 local gemSample
 local imgForParse
 
@@ -55,13 +54,12 @@ local gemSave
 -- 移動儲存
 local moveSave
 
+-- 文字訊息
+local comboText
+local dragTimeText
+
 -- For Debug
-local systemMemUsed
-local textureMemUsed
-local statuTitle
-local currentStatus
 local loadingTotalAmount
-local tmpTable
 local processIdx
 
 -----------------------------------------------------------------------------------------------------------------------------
@@ -95,50 +93,50 @@ local function updateProgress(prog)
 end
 
 -- 定位點移動 (目前無用)
-local function locatePointMove( event )
-    local t = event.target
-    local phase = event.phase
+-- local function locatePointMove( event )
+--     local t = event.target
+--     local phase = event.phase
 
-    if "began" == phase then
-        display.getCurrentStage():setFocus( t )
-        t.isFocus = true
-        t.x0 = event.x - t.x
-        t.y0 = event.y - t.y
+--     if "began" == phase then
+--         display.getCurrentStage():setFocus( t )
+--         t.isFocus = true
+--         t.x0 = event.x - t.x
+--         t.y0 = event.y - t.y
 
-    elseif t.isFocus then
-        if "moved" == phase then
-            t.x = event.x - t.x0
-            t.y = event.y - t.y0
-            if lineGroup[1] ~= nil then
-                lineGroup[1]:removeSelf()
-            end
+--     elseif t.isFocus then
+--         if "moved" == phase then
+--             t.x = event.x - t.x0
+--             t.y = event.y - t.y0
+--             if lineGroup[1] ~= nil then
+--                 lineGroup[1]:removeSelf()
+--             end
 
-            if t.dir == GM.LocatePointDir[1] then
-                locatePoint[2].y = t.y
-                locatePoint[4].x = t.x
-            elseif t.dir == GM.LocatePointDir[2] then
-                locatePoint[1].y = t.y
-                locatePoint[3].x = t.x
-            elseif t.dir == GM.LocatePointDir[3] then
-                locatePoint[4].y = t.y
-                locatePoint[2].x = t.x
-            elseif t.dir == GM.LocatePointDir[4] then
-                locatePoint[3].y = t.y
-                locatePoint[1].x = t.x
-            end
+--             if t.dir == GM.LocatePointDir[1] then
+--                 locatePoint[2].y = t.y
+--                 locatePoint[4].x = t.x
+--             elseif t.dir == GM.LocatePointDir[2] then
+--                 locatePoint[1].y = t.y
+--                 locatePoint[3].x = t.x
+--             elseif t.dir == GM.LocatePointDir[3] then
+--                 locatePoint[4].y = t.y
+--                 locatePoint[2].x = t.x
+--             elseif t.dir == GM.LocatePointDir[4] then
+--                 locatePoint[3].y = t.y
+--                 locatePoint[1].x = t.x
+--             end
 
-            local line = display.newLine( lineGroup, locatePoint[1].x, locatePoint[1].y, locatePoint[2].x, locatePoint[2].y )
-            line:append( locatePoint[3].x, locatePoint[3].y, locatePoint[4].x, locatePoint[4].y, locatePoint[1].x, locatePoint[1].y )
-            line:setStrokeColor( 1, 0, 0, 1 )
-            line.strokeWidth = 8
+--             local line = display.newLine( lineGroup, locatePoint[1].x, locatePoint[1].y, locatePoint[2].x, locatePoint[2].y )
+--             line:append( locatePoint[3].x, locatePoint[3].y, locatePoint[4].x, locatePoint[4].y, locatePoint[1].x, locatePoint[1].y )
+--             line:setStrokeColor( 1, 0, 0, 1 )
+--             line.strokeWidth = 8
 
-        elseif "ended" == phase or "cancelled" == phase then
-            display.getCurrentStage():setFocus( nil )
-            t.isFocus = false
+--         elseif "ended" == phase or "cancelled" == phase then
+--             display.getCurrentStage():setFocus( nil )
+--             t.isFocus = false
 
-        end
-    end
-end
+--         end
+--     end
+-- end
 
 -- Gem的觸控事件
 function gemDrag( event )
@@ -273,14 +271,12 @@ function gemDrag( event )
                 moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
                 --print(#moveSave)
             end
-
-            myCircle.x = event.x
-            myCircle.y = event.y
         elseif "ended" == phase or "cancelled" == phase then
             display.getCurrentStage():setFocus( nil )
             t.isFocus = false
             --GM.canTouch = false
-            t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)            
+            t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)
+            stageManager:AddCallback("updatecombo", updateComboText)
             stageManager:EliminateGem()
         end
     end
@@ -290,22 +286,22 @@ function gemDrag( event )
 end
 
 -- 分析點擊位置的顏色 (目前無用)
-function colorSampleTouch( event )
-    local t = event.target
-    local phase = event.phase
+-- function colorSampleTouch( event )
+--     local t = event.target
+--     local phase = event.phase
 
-    if "began" == phase then
-        display.getCurrentStage():setFocus( t )
-        t.isFocus = true
-        GM:DoColorSample(event.x, event.y)
-    elseif t.isFocus then
-        if "moved" == phase then
-        elseif "ended" == phase or "cancelled" == phase then
-            display.getCurrentStage():setFocus( nil )
-            t.isFocus = false
-        end
-    end
-end
+--     if "began" == phase then
+--         display.getCurrentStage():setFocus( t )
+--         t.isFocus = true
+--         GM:DoColorSample(event.x, event.y)
+--     elseif t.isFocus then
+--         if "moved" == phase then
+--         elseif "ended" == phase or "cancelled" == phase then
+--             display.getCurrentStage():setFocus( nil )
+--             t.isFocus = false
+--         end
+--     end
+-- end
 
 -- 讀取分析圖片
 function loadImage()
@@ -378,7 +374,7 @@ end
 
 -- 設定狀態文字
 function setStatus(content)
-    currentStatus.text = currentTitle .. content
+    infoManager:UpdateItemContent(3, content)
 end
 
 -- 回放功能
@@ -416,6 +412,7 @@ function playback()
             moveGemIdx = moveGemIdx+1
             startPlayback()
         else
+            stageManager:RemoveCallback("updatecombo", updateComboText)
             stageManager:EliminateGem()
         end
     end
@@ -482,13 +479,26 @@ function playback()
     -- doPlayback()
 end
 
+-- 更新拖曳時間
+function updateDragTime(elapsedTime)
+    infoManager:UpdateItemContent(4, elapsedTime)
+end
+
+-- 更新combo數
+function updateComboText(combo)    
+    infoManager:UpdateItemContent(5, combo)
+end
+
 -- 更新消耗記憶體
 function updateMemUsage()
     local memUsed = (collectgarbage("count"))
     local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576
 
-    systemMemUsed.text = "System Memory: " .. string.format("%.00f", memUsed) .. " KB"
-    textureMemUsed.text = "Texture Memory: " .. string.format("%.03f", texUsed) .. " MB"
+    -- systemMemUsed.text = "System Memory: " .. string.format("%.00f", memUsed) .. " KB"
+    -- textureMemUsed.text = "Texture Memory: " .. string.format("%.03f", texUsed) .. " MB"
+
+    infoManager:UpdateItemContent(1, string.format("%.00f", memUsed) .. " KB")
+    infoManager:UpdateItemContent(2, string.format("%.03f", texUsed) .. " MB")
 end
 
 -- 顯示gem資訊 (水平, 垂直, 顏色)
@@ -569,13 +579,14 @@ function buttonEvent(event)
         end
     elseif phase == "ended" then
         if target.id == 1 then
+            updateComboText(0)
             local colorIdxArr = {1, 2, 3, 4}
             stageManager:GenerateGem(scene.view, colorIdxArr, nil, false, gemDrag)
         elseif target.id == 2 then
             playback()
         elseif target.id == 3 then
-            -- loadImage()
-            selectPhoto()
+            loadImage()
+            -- selectPhoto()
         end
     end
 end
@@ -588,16 +599,12 @@ function scene:create( event )
     GM = GlobalManager:New(GM)
     stageManager = StageManager:New(stageManager)
     soundManager = SoundManager:New(soundManager)
+    infoManager = InfoManager:New(infoManager)
 
-    lineGroup = display.newGroup()
-    progressBarGroup = display.newGroup()
+    -- lineGroup = display.newGroup()
+    progressBarGroup = display.newGroup()    
 
-    myCircle = display.newCircle( 0, 0, GM.touchRadius*0.5 )
-    myCircle.isVisible = false
-
-    currentTitle = "Current Status: "
-
-    soundManager:LoadSound("test01")
+    soundManager:LoadSound("test01")    
 end
 
 function scene:show( event )
@@ -632,9 +639,19 @@ function scene:show( event )
         -- star.x = star.x+200        
 
         gemSave = { }
-        moveSave = { }
+        moveSave = { }        
 
-        -- 初始化監看消耗記憶體的文字
+        -- 資料顯示初始
+        infoManager:AddItem(1, "System Memory: ", "0 KB")
+        infoManager:AddItem(2, "Texture Memory: ", "0.000 MB")
+        infoManager:AddItem(3, "Current Status: ")
+        infoManager:AddItem(4, "拖曳時間: ", "0")
+        infoManager:AddItem(5, "Combo: ", "0")        
+
+        if (system.getInfo("environment") == "simulator") then
+            Runtime:addEventListener( "enterFrame", updateMemUsage)
+        end
+
         local options = 
         {
             text = "",
@@ -645,24 +662,11 @@ function scene:show( event )
             fontSize = 20,
             align = "left"  --new alignment parameter
         }
-        systemMemUsed = display.newText( options )
-        systemMemUsed.text = "System Memory: 0 KB",
-        systemMemUsed:setFillColor( 1, 1, 1 )
 
-        textureMemUsed = display.newText( options )
-        textureMemUsed.text = "Texture Memory: 0.000 MB"
-        textureMemUsed.y = 25
-        systemMemUsed:setFillColor( 1, 1, 1 )
+        infoManager:GenerateInfo(options)
+        infoManager:ShowItem(3, false)
 
-        currentStatus = display.newText( options )
-        currentStatus.text = "Current Status: "
-        currentStatus.y = 50
-        currentStatus:setFillColor( 1, 1, 1 )
-
-        if (system.getInfo("environment") == "simulator") then
-            Runtime:addEventListener( "enterFrame", updateMemUsage)
-        end
-
+        -- 按鈕初始
         if btns == nil then
             btns = { }
         end        
@@ -693,19 +697,19 @@ function scene:show( event )
         -- end
 
         -- Color Sample測試
-        -- local scaleRatio = display.contentHeight/1920
+        local scaleRatio = display.contentHeight/1920
         
-        -- gemSample = display.newImageRect("img/tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
-        -- gemSample.x = display.contentCenterX
-        -- gemSample.y = display.contentCenterY
-        -- gemSample:addEventListener("touch", colorSampleTouch)
+        gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
+        gemSample.x = display.contentCenterX
+        gemSample.y = display.contentCenterY
+        gemSample:addEventListener("touch", colorSampleTouch)
 
-        -- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
-        -- local yOffset = (1080*scaleRatio)/6
-        -- display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
-        -- imgForParse = gemSample
+        local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
+        local yOffset = (1080*scaleRatio)/6
+        display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
+        imgForParse = gemSample
 
-        -- Progress bar initial
+        -- 進度條初始
         options = {
             width = 64,
             height = 64,
@@ -713,7 +717,7 @@ function scene:show( event )
             sheetContentWidth = 384,
             sheetContentHeight = 64
         }
-        local progressSheet = graphics.newImageSheet( "/img/widget-progress-view02.png", options )
+        local progressSheet = graphics.newImageSheet( GM.UIPath .. "widget-progress-view02.png", options )
         
         progressView = widget.newProgressView(
             {

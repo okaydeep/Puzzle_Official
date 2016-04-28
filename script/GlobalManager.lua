@@ -9,7 +9,9 @@ function _:New(object)
 	return object
 end
 
-_.SpritePath = "img/sprite/"
+_.ImgRootPath	= "../img/"
+_.SpritePath	= "../img/sprite/"
+_.UIPath		= "../img/ui/"
 
 _.ButtonName = { "Regenerate", "Play back", "Load Image" }
 _.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", "gem_purple.png", "gem_pink.png" }
@@ -118,7 +120,7 @@ function _:DoColorSample(verticalIdx, horizontalIdx)
 	local xOffset, yOffset, finalPosX, finalPosY = 0, 0, 0, 0
 	local sumColorR, sumColorG, sumColorB = 0, 0, 0
 	local avgColorR, avgColorG, avgColorB = 0, 0, 0
-
+	
 	-- xOffset = horizontalIdx-3
 	-- yOffset = verticalIdx-3
 

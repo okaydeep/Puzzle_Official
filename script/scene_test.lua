@@ -121,9 +121,7 @@ local function clearTable()
     --     end
     -- end
 
-    -- clear(bigTable)
-
-        
+    -- clear(bigTable)        
 
     collectgarbage()
 

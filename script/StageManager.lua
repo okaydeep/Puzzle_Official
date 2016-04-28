@@ -16,6 +16,10 @@ function _:New(object)
 	return object
 end
 
+_.comboAmount = 0
+
+_.callback = { }
+
 _.stage = {
 	{ },
 	{ },
@@ -23,6 +27,22 @@ _.stage = {
 	{ },
 	{ }
 }
+
+function _:AddCallback(name, callback)
+	if self.callback[name] == nil then
+		self.callback[name] = callback
+	else
+
+	end
+end
+
+function _:RemoveCallback(name, callback)
+	if self.callback[name] ~= nil then
+		self.callback[name] = nil
+	else
+
+	end
+end
 
 -- 新增gem到盤面群組裡, i:橫排, j:縱列, gem:新生成的gem table
 function _:AddGemToStage( i, j, gem )
@@ -559,11 +579,16 @@ function _:EliminateGem()
 		local params = event.source.params
         local pos = params.gemPos        
 
-        for i=1, #pos do
+        for i=1, #pos do        	
         	self.stage[pos[i][2]][pos[i][1]].color = "none"
         	local target = self.stage[pos[i][2]][pos[i][1]].img
         	transition.to( target, {time=GM.clearDelay, alpha=0} )
-        end		
+        end
+
+        if self.callback["updatecombo"] ~= nil then
+        	self.comboAmount = self.comboAmount+1
+        	self.callback["updatecombo"](self.comboAmount)
+        end
 	end
 
 	-- 放置待消除組合的容器
@@ -583,7 +608,9 @@ function _:EliminateGem()
         end
     end
 
-    if #allClearGemPos > 0 then	
+    if #allClearGemPos > 0 then
+    	self.comboAmount = 0
+    	print( #allClearGemPos )
 		for i=1, #allClearGemPos do
 			local t = timer.performWithDelay( GM.clearDelay*(i-1), clearGem )
 			t.params = {gemPos = allClearGemPos[i]}
@@ -592,7 +619,7 @@ function _:EliminateGem()
 		timer.performWithDelay( GM.clearDelay*#allClearGemPos, addNewGem )
 		timer.performWithDelay( GM.clearDelay*#allClearGemPos, gemDrop )
 	end
-
+	
 	allClearGemPos = nil
 end
 
