@@ -1,4 +1,12 @@
 
+-- ===================================
+-- 音源管理
+-- 範例:
+-- SM = SoundManager:New(SM)
+-- SM:LoadSound("test01")
+-- SM:PlaySound("test01")
+-- ===================================
+
 SoundManager = { }
 _ = SoundManager
 

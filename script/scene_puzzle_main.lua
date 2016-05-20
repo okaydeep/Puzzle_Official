@@ -664,6 +664,8 @@ function scene:show( event )
         }
 
         infoManager:GenerateInfo(options)
+        infoManager:ShowItem(1, false)
+        infoManager:ShowItem(2, false)
         infoManager:ShowItem(3, false)
 
         -- 按鈕初始
@@ -702,7 +704,7 @@ function scene:show( event )
         gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
         gemSample.x = display.contentCenterX
         gemSample.y = display.contentCenterY
-        gemSample:addEventListener("touch", colorSampleTouch)
+        -- gemSample:addEventListener("touch", colorSampleTouch)
 
         local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
         local yOffset = (1080*scaleRatio)/6
@@ -748,11 +750,11 @@ function scene:show( event )
             fontSize = 20,
             align = "center"  --new alignment parameter
         }
-
+        
         progressText = display.newText( options )
         progressText.text = "0%"
         progressText.x = display.contentCenterX
-        progressText.y = display.contentCenterY        
+        progressText.y = display.contentCenterY
         progressText:setFillColor( 1, 1, 1 )
 
         progressBarGroup:insert(progressView)

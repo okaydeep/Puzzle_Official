@@ -6,7 +6,6 @@ require( "Gem" )
 
 -- Class sample
 StageManager = { }
-
 _ = StageManager
 
 function _:New(object)

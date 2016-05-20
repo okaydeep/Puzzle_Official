@@ -1,6 +1,16 @@
--- Class sample
-InfoManager = { }
 
+-- ===================================
+-- 文字訊息管理
+-- 範例:
+-- IM = InfoManager:New(IM)
+-- IM:AddItem(1, "Msg Title1: ", "content1")
+-- IM:AddItem(2, "Msg Title2: ", "content2")
+-- IM:GenerateInfo(nil)
+-- IM:ShowItem(2, false)
+-- IM:UpdateItemContent(1, "changed content")
+-- ===================================
+
+InfoManager = { }
 _ = InfoManager
 
 function _:New(object)

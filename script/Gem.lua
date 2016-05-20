@@ -1,6 +1,5 @@
--- Class sample
-Gem = { }
 
+Gem = { }
 _ = Gem
 
 function _:New(object)

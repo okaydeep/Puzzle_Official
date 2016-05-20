@@ -1,4 +1,4 @@
--- Class sample
+
 GlobalManager = { }
 _ = GlobalManager
 
