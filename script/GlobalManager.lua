@@ -28,7 +28,7 @@ _.btnDefaultOption = {
                 --font = native.systemFont,
                 fontSize = 32,
                 --emboss = true,
-                --id = "button",                
+                --id = "button",
                 -- width = 160,
                 -- height = 80,
                 -- defaultFile = GM.SpritePath.."reset.png",
@@ -41,12 +41,6 @@ _.loadFromImage = false
 
 _.touchRadius = 40
 _.touchAreaCoe = 0.3	-- 觸碰範圍係數, 0.5是預設, 越小越好斜轉
-
-_.gemWidth = 100
-_.gemHeight = 110
-
-_.gemStartX = 10
-_.gemStartY = 100
 
 -- 每一串珠消除的延遲
 _.clearDelay = 350

@@ -15,6 +15,15 @@ function _:New(object)
 	return object
 end
 
+_.gemWidth = 110
+_.gemHeight = 110
+
+_.gemStartX = 54
+_.gemStartY = 100
+
+_.panelWidth = 6
+_.panelHeight = 5
+
 _.comboAmount = 0
 
 _.callback = { }
@@ -43,6 +52,27 @@ function _:RemoveCallback(name, callback)
 	end
 end
 
+function _:GetPanelSize()
+	return self.panelWidth, self.panelHeight
+end
+
+function _:SetPanelSize(width, height)
+	self.panelWidth = width
+	self.panelHeight = height
+
+	if self.stage ~= nil then
+		for i=1, #(self.stage) do
+			self.stage[i] = nil
+		end
+	end
+
+	self.stage = { }
+
+	for i=1, self.panelHeight do
+		self.stage[i] = { }
+	end
+end
+
 -- 新增gem到盤面群組裡, i:橫排, j:縱列, gem:新生成的gem table
 function _:AddGemToStage( i, j, gem )
 	self.stage[i][j] = gem
@@ -51,7 +81,7 @@ end
 function _:GetColor( i, j )
 	local color = "none"
 
-	if self.isValidStagePos(i, j) == true then
+	if self:isValidStagePos(i, j) == true then
 		if self.stage[i][j] ~= nil then
 			color = self.stage[i][j].color
 		end
@@ -64,9 +94,9 @@ end
 function _:CheckTouch( posX, posY, stageI, stageJ )
 	local result = false
 
-	if self.isValidStagePos(stageI, stageJ) == true then
-		local dX = GM.gemStartX+stageJ*GM.gemWidth-posX
-		local dY = GM.gemStartY+stageI*GM.gemHeight-posY
+	if self:isValidStagePos(stageI, stageJ) == true then
+		local dX = self.gemStartX+stageJ*self.gemWidth-posX
+		local dY = self.gemStartY+stageI*self.gemHeight-posY
 
 		if self.distance(dX, dY) <= GM.touchRadius then
 			result = true
@@ -79,13 +109,14 @@ end
 -- 檢查是否連線, stageI:橫排, stageJ:縱列
 function _:CheckConnected( stageI, stageJ )	
 	local idx
-	local connectedAmount	
+	local connectedAmount
+	local panelW, panelH = self:GetPanelSize()
 	
 	-- 水平連線檢查
 	-- 檢查右方連線
 	idx = 1
 	connectedAmount = 1
-	while stageJ+idx<=6 do
+	while stageJ+idx<=panelW do
 		if self:GetColor(stageI, stageJ) == self:GetColor(stageI, stageJ+idx) and self:GetColor(stageI, stageJ) ~= "none" then
 			connectedAmount = connectedAmount+1
 			idx = idx+1
@@ -125,7 +156,7 @@ function _:CheckConnected( stageI, stageJ )
 	-- 檢查下方連線
 	idx = 1
 	connectedAmount = 1
-	while stageI+idx<=5 do
+	while stageI+idx<=panelH do
 		if self:GetColor(stageI, stageJ) == self:GetColor(stageI+idx, stageJ) and self:GetColor(stageI, stageJ) ~= "none" then
 			connectedAmount = connectedAmount+1
 			idx = idx+1
@@ -167,6 +198,7 @@ end
 -- 取得(若有)連線gem的座標(若無則返回空table), stageI:橫排, stageJ:縱列
 function _:GetConnectedGemPos( stageI, stageJ )
 	local gemPos = { }
+	local panelW, panelH = self:GetPanelSize()
 
 	if self:CheckConnected(stageI, stageJ) == false then
 		return gemPos
@@ -183,7 +215,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 		local posYDelta		
 
 		if dir == "horizon" then
-			hDirLimit = 6
+			hDirLimit = panelW
 			posXOffset = 1
 			posXDelta = 1
 
@@ -216,7 +248,7 @@ function _:GetConnectedGemPos( stageI, stageJ )
 			end
 
 		elseif dir == "vertical" then		
-			vDirLimit = 5
+			vDirLimit = panelH
 			posYOffset = 1
 			posYDelta = 1
 
@@ -303,9 +335,9 @@ end
 
 -- 碰撞物件互換, aI:a的橫排, aJ:a的縱列, bI:b的橫排, bJ:b的縱列
 function _:GemSwap( aI, aJ, bI, bJ )		
-	if self.isValidStagePos(aI, aJ) == true and self.isValidStagePos(bI, bJ) == true then
+	if self:isValidStagePos(aI, aJ) == true and self:isValidStagePos(bI, bJ) == true then
 		local imgB = self.stage[bI][bJ].img
-		imgB.x, imgB.y = self.stageToWorldPos(aI, aJ)
+		imgB.x, imgB.y = self:stageToWorldPos(aI, aJ)
 		
 		local tmpA = GM.deepCopy(self.stage[aI][aJ])
 		local tmpB = GM.deepCopy(self.stage[bI][bJ])
@@ -327,14 +359,15 @@ function _:GemSwap( aI, aJ, bI, bJ )
 	end
 end
 
-function _.GeneratePosTable()
+function _:GeneratePosTable()
+	local panelW, panelH = self:GetPanelSize()
 	local posTable = { }
 
 	local idx = 1
 
-	for i=1, 5 do
-        for j=1, 6 do
-           posTable[idx] = {j, i}
+	for i=1, panelH do
+        for j=1, panelW do
+           posTable[idx] = {j, i}           
            idx = idx+1
         end
     end
@@ -343,16 +376,24 @@ function _.GeneratePosTable()
 end
 
 function _:InitGem()
-	local posTable = self.GeneratePosTable()
+	local adjustGemSize = math.floor(660/self.panelWidth)
+	self.gemWidth = adjustGemSize
+	self.gemHeight = adjustGemSize
 
+	local posTable = self:GeneratePosTable()	
+	
     for i=1, #posTable do
 		local gem = Gem:New(gem)    	
 	    gem.stagePos = {x=posTable[i][1], y=posTable[i][2]}
 	    gem.color = "none"
 	    gem.checkHConnected = false
 	    gem.checkVConnected = false	    
+	    
+	    if self.stage[gem.stagePos.y][gem.stagePos.x] ~= nil then
+	    	table.remove(self.stage[gem.stagePos.y][gem.stagePos.x])
+	    end
 
-	    self:AddGemToStage(gem.stagePos.y, gem.stagePos.x, gem)	    
+	    self:AddGemToStage(gem.stagePos.y, gem.stagePos.x, gem)
     end
 end
 
@@ -364,10 +405,11 @@ end
 -- touchEvt:規定的觸碰事件,
 function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllowed, touchEvt )	
 	-- 迴圈跳出標準
+	local panelW, panelH = self:GetPanelSize()	
 	local connected
 	local colorIdxArr
 	local gemInitPosYOffset = { }
-	local posTable = self.GeneratePosTable()
+	local posTable = self:GeneratePosTable()
 
 	if parsedColor == nil then		
 		colorIdxArr = colorIdxTable
@@ -375,8 +417,8 @@ function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllo
 		colorIdxArr = {1, 2, 3, 4, 5, 6}
 	end
 
-	for j=1, 6 do		
-		for i=1, 5 do
+	for j=1, panelW do		
+		for i=1, panelH do
 			self.stage[i][j].color = "none"
 			if self.stage[i][j].img then
 				self.stage[i][j].img:removeSelf()
@@ -384,10 +426,10 @@ function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllo
 		end		
 	end
 
-	for j=1, 6 do
+	for j=1, panelW do
 		local offset = 0
 
-		for i=1, 5 do
+		for i=1, panelH do
 			if self.stage[i][j].color == "none" then
 				offset = offset+1
 			end
@@ -396,8 +438,8 @@ function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllo
 		gemInitPosYOffset[j] = offset
 	end
 
-    for i=1, 5 do
-    	for j=1, 6 do
+    for i=1, panelH do
+    	for j=1, panelW do
     		local gem = self.stage[i][j]
 
     		-- 如果gem種類為none
@@ -498,11 +540,11 @@ function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllo
     end
 
     -- 掉落動畫
-    for j=1, 6 do
-    	for i=1, 5 do
+    for j=1, panelW do
+    	for i=1, panelH do
     		local gem = self.stage[i][j]    		
-    		local posX, posY = self.stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
-    		local initPosY = 200-(gemInitPosYOffset[j]-i+1)*GM.gemHeight
+    		local posX, posY = self:stageToWorldPos(gem.stagePos.y, gem.stagePos.x)
+    		local initPosY = 200-(gemInitPosYOffset[j]-i+1)*self.gemHeight
     		
     		gem.img.x, gem.img.y = posX, initPosY
     		gem.img.alpha = 0.3
@@ -515,9 +557,11 @@ end
 
 -- 消除盤面中有連線的gem
 function _:EliminateGem()
+	local panelW, panelH = self:GetPanelSize()
+
 	-- 將直橫檢查還原
-	for i=1, 5 do
-		for j=1, 6 do
+	for i=1, panelH do
+		for j=1, panelW do
 			self.stage[i][j].checkHConnected = false
 			self.stage[i][j].checkVConnected = false
 		end
@@ -525,8 +569,8 @@ function _:EliminateGem()
 
 	-- 更新掉落後的珠子
 	local function updateGem()
-		for j=1, 6 do
-			for i=5, 1, -1 do
+		for j=1, panelW do
+			for i=panelH, 1, -1 do
 				if self:GetColor(i, j) == "none" then
 					local yIdx = -1
 
@@ -554,16 +598,16 @@ function _:EliminateGem()
 		-- 計算掉落距離		
 		local dropIdxArr = { }		
 
-		for j=1, 6 do
+		for j=1, panelW do
 			local dropIdx = 0
 
-			for i=5, 1, -1 do
+			for i=panelH, 1, -1 do
 				if self.stage[i][j].color == "none" then
 					dropIdx = dropIdx+1
 				else
 					if dropIdx > 0 then
 						local target = self.stage[i][j].img
-						transition.to( target, {time=GM.dropDuration, y=target.y+(GM.gemHeight*dropIdx), transition=easing.inQuad, 
+						transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad, 
 							onComplete=updateGem} )
 					end
 				end
@@ -595,8 +639,8 @@ function _:EliminateGem()
     local allClearGemPos = { }
 
     -- 全盤檢查, 儲存相連的組合
-    for i=1, 5 do
-        for j=1, 6 do
+    for i=1, panelH do
+        for j=1, panelW do
             if self.stage[i][j].checkHConnected == false or self.stage[i][j].checkVConnected == false then
                 local clearGemPos = self:GetConnectedGemPos(i, j)
 
@@ -623,21 +667,21 @@ function _:EliminateGem()
 end
 
 -- 相對位置轉成實際位置, i:橫排, j:縱列
-function _.stageToWorldPos( i, j )
+function _:stageToWorldPos( i, j )
 	local posX, posY
 
-	posX = GM.gemStartX+j*GM.gemWidth
-	posY = GM.gemStartY+i*GM.gemHeight
+	posX = self.gemStartX+(j-0.5)*self.gemWidth
+	posY = self.gemStartY+i*self.gemHeight
 
 	return posX, posY
 end
 
 -- 實際位置轉成相對位置, x:x位置, y:y位置
-function _.worldToStagePos( x, y )
+function _:worldToStagePos( x, y )
 	local posI, posJ
 
-	posI = math.round((y-GM.gemStartY)/GM.gemHeight)
-	posJ = math.round((x-GM.gemStartX)/GM.gemWidth)
+	posI = math.round((y-self.gemStartY)/self.gemHeight)
+	posJ = math.round((x-self.gemStartX+self.gemWidth*0.5)/self.gemWidth)
 
 	return posI, posJ
 end
@@ -648,10 +692,11 @@ function _.distance( dX, dY )
 end
 
 -- 判斷相對位置是否合法, i:橫排, j:縱列
-function _.isValidStagePos( i, j )
+function _:isValidStagePos( i, j )
 	local result = true
+	local panelW, panelH = self:GetPanelSize()
 
-	if i<1 or i>5 or j<1 or j>6 then
+	if i<1 or i>panelH or j<1 or j>panelW then
 		result = false
 	end
 

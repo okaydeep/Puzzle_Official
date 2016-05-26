@@ -142,6 +142,7 @@ end
 function gemDrag( event )
     local t = event.target
     local phase = event.phase
+    local panelW, panelH = stageManager:GetPanelSize()
 --[[
     if GM.canTouch == false then
         return
@@ -159,14 +160,14 @@ function gemDrag( event )
         t.y0 = event.y - t.y
         t.startX = event.x
         t.startY = event.y
-        touchedGemI, touchedGemJ = stageManager.worldToStagePos(event.x, event.y)
+        touchedGemI, touchedGemJ = stageManager:worldToStagePos(event.x, event.y)
 
         showGemInfo(touchedGemI, touchedGemJ)        
 
-        for i=1, 5 do
+        for i=1, panelH do
             gemSave[i] = { }
 
-            for j=1, 6 do
+            for j=1, panelW do
                 for idx, val in ipairs(GM.Color) do
                     if stageManager:GetColor(i, j) == val then
                         gemSave[i][j] = idx
@@ -181,12 +182,12 @@ function gemDrag( event )
         if "moved" == phase then
             t.x = event.x - t.x0
             t.y = event.y - t.y0
-            local gX, gY = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)
+            local gX, gY = stageManager:stageToWorldPos(touchedGemI, touchedGemJ)
             local moveX = event.x-gX
             local moveY = event.y-gY
 
             -- 分九宮格, 從下方開始
-            if moveY >= GM.gemHeight*(1-GM.touchAreaCoe) then
+            if moveY >= stageManager.gemHeight*(1-GM.touchAreaCoe) then
                 -- 下方邊界判定
                 if touchedGemI >= 5 then
                     collidedGemI = touchedGemI
@@ -195,15 +196,15 @@ function gemDrag( event )
                 end
 
                 -- 直行判斷
-                if moveX >= GM.gemWidth*(1-GM.touchAreaCoe) then
+                if moveX >= stageManager.gemWidth*(1-GM.touchAreaCoe) then
                     if touchedGemJ >= 6 then
                         collidedGemJ = touchedGemJ
                     else
                         collidedGemJ = touchedGemJ+1    
                     end
-                elseif moveX <= GM.gemWidth*GM.touchAreaCoe and moveX >= GM.gemWidth*(-GM.touchAreaCoe) then
+                elseif moveX <= stageManager.gemWidth*GM.touchAreaCoe and moveX >= stageManager.gemWidth*(-GM.touchAreaCoe) then
                     collidedGemJ = touchedGemJ
-                elseif moveX <= GM.gemWidth*(-1+GM.touchAreaCoe) then
+                elseif moveX <= stageManager.gemWidth*(-1+GM.touchAreaCoe) then
                     if touchedGemJ <= 1 then
                         collidedGemJ = touchedGemJ
                     else
@@ -212,21 +213,21 @@ function gemDrag( event )
                 end
 
             -- 中間
-            elseif moveY <= GM.gemHeight*GM.touchAreaCoe and  moveY >= GM.gemHeight*(-GM.touchAreaCoe) then
+            elseif moveY <= stageManager.gemHeight*GM.touchAreaCoe and  moveY >= stageManager.gemHeight*(-GM.touchAreaCoe) then
                 collidedGemI = touchedGemI
 
                 -- 直行判斷
-                if moveX >= GM.gemWidth*(1-GM.touchAreaCoe) then
+                if moveX >= stageManager.gemWidth*(1-GM.touchAreaCoe) then
                     if touchedGemJ >= 6 then
                         collidedGemJ = touchedGemJ
                     else
                         collidedGemJ = touchedGemJ+1    
                     end
-                elseif moveX <= GM.gemWidth*GM.touchAreaCoe and moveX >= GM.gemWidth*(-GM.touchAreaCoe) then
+                elseif moveX <= stageManager.gemWidth*GM.touchAreaCoe and moveX >= stageManager.gemWidth*(-GM.touchAreaCoe) then
                     -- 無珠子碰撞
                     collidedGemI = nil                    
                     collidedGemJ = nil
-                elseif moveX <= GM.gemWidth*(-1+GM.touchAreaCoe) then
+                elseif moveX <= stageManager.gemWidth*(-1+GM.touchAreaCoe) then
                     if touchedGemJ <= 1 then
                         collidedGemJ = touchedGemJ
                     else
@@ -235,7 +236,7 @@ function gemDrag( event )
                 end
 
             -- 上方
-            elseif moveY <= GM.gemHeight*(-1+GM.touchAreaCoe) then
+            elseif moveY <= stageManager.gemHeight*(-1+GM.touchAreaCoe) then
                 -- 上方邊界判定
                 if touchedGemI <= 1 then
                     collidedGemI = touchedGemI
@@ -244,15 +245,15 @@ function gemDrag( event )
                 end
 
                 -- 直行判斷
-                if moveX >= GM.gemWidth*(1-GM.touchAreaCoe) then
+                if moveX >= stageManager.gemWidth*(1-GM.touchAreaCoe) then
                     if touchedGemJ >= 6 then
                         collidedGemJ = touchedGemJ
                     else
                         collidedGemJ = touchedGemJ+1    
                     end
-                elseif moveX <= GM.gemWidth*GM.touchAreaCoe and moveX >= GM.gemWidth*(-GM.touchAreaCoe) then
+                elseif moveX <= stageManager.gemWidth*GM.touchAreaCoe and moveX >= stageManager.gemWidth*(-GM.touchAreaCoe) then
                     collidedGemJ = touchedGemJ
-                elseif moveX <= GM.gemWidth*(-1+GM.touchAreaCoe) then
+                elseif moveX <= stageManager.gemWidth*(-1+GM.touchAreaCoe) then
                     if touchedGemJ <= 1 then
                         collidedGemJ = touchedGemJ
                     else
@@ -275,7 +276,7 @@ function gemDrag( event )
             display.getCurrentStage():setFocus( nil )
             t.isFocus = false
             --GM.canTouch = false
-            t.x, t.y = stageManager.stageToWorldPos(touchedGemI, touchedGemJ)
+            t.x, t.y = stageManager:stageToWorldPos(touchedGemI, touchedGemJ)
             stageManager:AddCallback("updatecombo", updateComboText)
             stageManager:EliminateGem()
         end
@@ -305,8 +306,9 @@ end
 
 -- 讀取分析圖片
 function loadImage()
+    local panelW, panelH = stageManager:GetPanelSize()
     GM.loadFromImage = true
-    loadingTotalAmount = 6*5
+    loadingTotalAmount = panelW*panelH
     processIdx = 1    
     doLoadImage()
 end
@@ -323,7 +325,9 @@ function loadImageFinished()
 end
 
 -- 讀取分析圖片(使用計時器延遲呼叫)
-function doLoadImage()    
+function doLoadImage()
+    local panelW, panelH = stageManager:GetPanelSize()
+
     updateStatus()
 
     -- 讀取結束
@@ -339,8 +343,8 @@ function doLoadImage()
     timer.performWithDelay(1, function()
         local idx, vIdx, hIdx = 0, 0, 0
         idx = processIdx    
-        vIdx = math.floor((idx-1)/6)+1
-        hIdx = (idx-1)%6+1
+        vIdx = math.floor((idx-1)/panelW)+1
+        hIdx = (idx-1)%panelW+1
         processIdx = processIdx+1
         if processIdx <= loadingTotalAmount then
             GM.parseColorCallback[1] = doLoadImage
@@ -379,6 +383,7 @@ end
 
 -- 回放功能
 function playback()
+    local panelW, panelH = stageManager:GetPanelSize()
     local sceneGroup = scene.view
     -- local gemIdx = 2
     local moveGemIdx = 1
@@ -393,9 +398,9 @@ function playback()
         --print(i,v)
     end
 
-    for i=1, 5 do
-        for j=1, 6 do            
-            local posX, posY = stageManager.stageToWorldPos(i, j)
+    for i=1, panelH do
+        for j=1, panelW do
+            local posX, posY = stageManager:stageToWorldPos(i, j)
             stageManager.stage[i][j].img:removeSelf()
             --print(GM.GemName[gemSave[i][j]])
             stageManager.stage[i][j].color = GM.Color[gemSave[i][j]]
@@ -424,7 +429,7 @@ function playback()
     function gemMove(event)
         local movePos = moveSave[moveGemIdx]
         local moveGem = stageManager.stage[movePos[2]][movePos[1]].img
-        local postX, postY = stageManager.stageToWorldPos(moveSave[moveGemIdx+1][2], moveSave[moveGemIdx+1][1])
+        local postX, postY = stageManager:stageToWorldPos(moveSave[moveGemIdx+1][2], moveSave[moveGemIdx+1][1])
         if moveGemIdx == 1 then
             moveGem:toFront()
         end
@@ -580,7 +585,7 @@ function buttonEvent(event)
     elseif phase == "ended" then
         if target.id == 1 then
             updateComboText(0)
-            local colorIdxArr = {1, 2, 3, 4}
+            local colorIdxArr = {1, 2, 3, 4}            
             stageManager:GenerateGem(scene.view, colorIdxArr, nil, false, gemDrag)
         elseif target.id == 2 then
             playback()
@@ -604,7 +609,7 @@ function scene:create( event )
     -- lineGroup = display.newGroup()
     progressBarGroup = display.newGroup()    
 
-    soundManager:LoadSound("test01")    
+    soundManager:LoadSound("test01")
 end
 
 function scene:show( event )
@@ -615,6 +620,7 @@ function scene:show( event )
         -- 欲使用的gem引數
         local colorIdxArr = {1, 2, 3, 4}
         -- 初始盤面
+        stageManager:SetPanelSize(5, 5)
         stageManager:InitGem()
         -- 延遲500ms產生盤面 (匿名函式Anonymous Function)
         --timer.performWithDelay(500, function() stageManager:GenerateGem(sceneGroup, colorIdxArr, false, gemDrag) end )        
@@ -636,7 +642,7 @@ function scene:show( event )
         -- star:append( 305,165, 243,216, 265,290, 200,245, 135,290, 157,215, 95,165, 173,165, 200,90 )
         -- star:setStrokeColor( 1, 0, 0, 1 )
         -- star.strokeWidth = 8
-        -- star.x = star.x+200        
+        -- star.x = star.x+200
 
         gemSave = { }
         moveSave = { }        
@@ -646,7 +652,7 @@ function scene:show( event )
         infoManager:AddItem(2, "Texture Memory: ", "0.000 MB")
         infoManager:AddItem(3, "Current Status: ")
         infoManager:AddItem(4, "拖曳時間: ", "0")
-        infoManager:AddItem(5, "Combo: ", "0")        
+        infoManager:AddItem(5, "Combo: ", "0")
 
         if (system.getInfo("environment") == "simulator") then
             Runtime:addEventListener( "enterFrame", updateMemUsage)
@@ -699,17 +705,17 @@ function scene:show( event )
         -- end
 
         -- Color Sample測試
-        local scaleRatio = display.contentHeight/1920
+        -- local scaleRatio = display.contentHeight/1920
         
-        gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
-        gemSample.x = display.contentCenterX
-        gemSample.y = display.contentCenterY
-        -- gemSample:addEventListener("touch", colorSampleTouch)
+        -- gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
+        -- gemSample.x = display.contentCenterX
+        -- gemSample.y = display.contentCenterY
+        -- -- gemSample:addEventListener("touch", colorSampleTouch)
 
-        local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
-        local yOffset = (1080*scaleRatio)/6
-        display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
-        imgForParse = gemSample
+        -- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
+        -- local yOffset = (1080*scaleRatio)/6
+        -- display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
+        -- imgForParse = gemSample
 
         -- 進度條初始
         options = {
