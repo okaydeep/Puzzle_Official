@@ -39,7 +39,6 @@ _.btnDefaultOption = {
 _.canTouch = true
 _.loadFromImage = false
 
-_.touchRadius = 40
 _.touchAreaCoe = 0.3	-- 觸碰範圍係數, 0.5是預設, 越小越好斜轉
 
 -- 每一串珠消除的延遲
