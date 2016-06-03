@@ -20,24 +20,16 @@ local scene = composer.newScene( sceneName )
 
 ---------------------------------------------------------------------------------
 
--- 屬性, 狀態設定
-local beginDrag
-local preSystemTime
-local dragTime
-
--- 遊戲物件
 local GM
 local stageManager
 local soundManager
 local infoManager
 
--- 觸控gem紀錄
 local touchedGemI
 local touchedGemJ
 local collidedGemI
 local collidedGemJ
 
--- 暫用圖片物件
 local gemSample
 local imgForParse
 
@@ -161,8 +153,7 @@ function gemDrag( event )
         t.isFocus = true
         t.x = event.x
         t.y = event.y
-        t:toFront()
-        dragTime = 0
+        t:toFront()        
         
         -- Store initial position
         t.x0 = event.x - t.x
@@ -279,7 +270,6 @@ function gemDrag( event )
                 collidedGemI = nil
                 collidedGemJ = nil
                 moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
-                beginDrag = true                
                 --print(#moveSave)
             end
         elseif "ended" == phase or "cancelled" == phase then
@@ -289,7 +279,6 @@ function gemDrag( event )
             t.x, t.y = stageManager:stageToWorldPos(touchedGemI, touchedGemJ)
             stageManager:AddCallback("updatecombo", updateComboText)
             stageManager:EliminateGem()
-            beginDrag = false
         end
     end
 
@@ -353,7 +342,7 @@ function doLoadImage()
     
     timer.performWithDelay(1, function()
         local idx, vIdx, hIdx = 0, 0, 0
-        idx = processIdx
+        idx = processIdx    
         vIdx = math.floor((idx-1)/panelW)+1
         hIdx = (idx-1)%panelW+1
         processIdx = processIdx+1
@@ -428,7 +417,7 @@ function playback()
             moveGemIdx = moveGemIdx+1
             startPlayback()
         else
-            stageManager:RemoveCallback("updatecombo")
+            stageManager:RemoveCallback("updatecombo", updateComboText)
             stageManager:EliminateGem()
         end
     end
@@ -496,18 +485,9 @@ function playback()
 end
 
 -- 更新拖曳時間
-function updateDragTime()
-    if beginDrag == true then
-        local deltaTime = system.getTimer()-preSystemTime
-        dragTime = dragTime + deltaTime
-
-        -- infoManager:UpdateItemContent(4, elapsedTime)
-        infoManager:UpdateItemContent(4, string.format("%.2f", dragTime/1000))
-    end
-
-    preSystemTime = system.getTimer()
+function updateDragTime(elapsedTime)
+    infoManager:UpdateItemContent(4, elapsedTime)
 end
-Runtime:addEventListener("enterFrame", updateDragTime)
 
 -- 更新combo數
 function updateComboText(combo)    
@@ -637,18 +617,11 @@ function scene:show( event )
     local phase = event.phase    
 
     if phase == "will" then
-        -- 屬性設定初始
-        beginDrag = false
-        preSystemTime = 0        
-        dragTime = 0
-
         -- 欲使用的gem引數
         local colorIdxArr = {1, 2, 3, 4}
-
         -- 初始盤面
         stageManager:SetPanelSize(5, 5)
         stageManager:InitGem()
-
         -- 延遲500ms產生盤面 (匿名函式Anonymous Function)
         --timer.performWithDelay(500, function() stageManager:GenerateGem(sceneGroup, colorIdxArr, false, gemDrag) end )        
 
@@ -721,10 +694,10 @@ function scene:show( event )
         end
 
         -- 截圖的定位點
-        -- local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }        
+        -- local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }
 
         -- for i=1, #GM.LocatePointDir do
-        --     local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], 40*0.5 )
+        --     local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], GM.touchRadius*0.5 )
         --     lPoint.dir = GM.LocatePointDir[i]
         --     lPoint:addEventListener("touch", locatePointMove)
         --     locatePoint = locatePoint or { }
@@ -808,7 +781,7 @@ function scene:hide( event )
         
     elseif phase == "did" then
         
-    end
+    end 
 end
 
 

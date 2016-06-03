@@ -36,8 +36,7 @@ _.stage = {
 	{ }
 }
 
--- 註冊callback, name:callback名稱, callback:callback函式 (目前只有消除珠子時呼叫)
-function _:AddCallback( name, callback )
+function _:AddCallback(name, callback)
 	if self.callback[name] == nil then
 		self.callback[name] = callback
 	else
@@ -45,8 +44,7 @@ function _:AddCallback( name, callback )
 	end
 end
 
--- 移除callback, name:callback名稱
-function _:RemoveCallback( name )
+function _:RemoveCallback(name, callback)
 	if self.callback[name] ~= nil then
 		self.callback[name] = nil
 	else
@@ -54,13 +52,11 @@ function _:RemoveCallback( name )
 	end
 end
 
--- 取得目前盤面寬長的比例
 function _:GetPanelSize()
 	return self.panelWidth, self.panelHeight
 end
 
--- 設定盤面寬長, width:寬, height:高 (設定完後須重新呼叫InitGem)
-function _:SetPanelSize( width, height )
+function _:SetPanelSize(width, height)
 	self.panelWidth = width
 	self.panelHeight = height
 
@@ -82,7 +78,6 @@ function _:AddGemToStage( i, j, gem )
 	self.stage[i][j] = gem
 end
 
--- 取得特定位置的gem顏色, i:橫排, j:縱列
 function _:GetColor( i, j )
 	local color = "none"
 
