@@ -600,9 +600,7 @@ function _:EliminateGem()
 
 	-- 消除後的掉落
 	local function gemDrop(event)
-		-- 計算掉落距離		
-		local dropIdxArr = { }		
-
+		-- 計算掉落距離
 		for j=1, panelW do
 			local dropIdx = 0
 
@@ -612,13 +610,16 @@ function _:EliminateGem()
 				else
 					if dropIdx > 0 then
 						local target = self.stage[i][j].img
-						transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad, 
-							onComplete=updateGem} )
+
+						if j < panelW then
+							transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad} )
+						else
+							transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad, 
+								onComplete=updateGem} )
+						end
 					end
 				end
 			end
-
-			dropIdxArr[j] = dropIdx
 		end
 	end
 
