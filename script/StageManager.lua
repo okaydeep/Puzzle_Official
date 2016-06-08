@@ -561,7 +561,7 @@ function _:GenerateGem( displayGroup, colorIdxTable, parsedColor, connectionAllo
 end
 
 -- 消除盤面中有連線的gem
-function _:EliminateGem()
+function _:Eliminate()
 	local panelW, panelH = self:GetPanelSize()
 
 	-- 將直橫檢查還原
@@ -595,7 +595,8 @@ function _:EliminateGem()
 			end
 		end
 
-		self:EliminateGem()
+		local func = self:Eliminate()
+		timer.performWithDelay(100, func)
 	end
 
 	-- 消除後的掉落
@@ -610,15 +611,14 @@ function _:EliminateGem()
 				else
 					if dropIdx > 0 then
 						local target = self.stage[i][j].img
-
-						if j < panelW then
-							transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad} )
-						else
-							transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad, 
-								onComplete=updateGem} )
-						end
+						transition.to( target, {time=GM.dropDuration, y=target.y+(self.gemHeight*dropIdx), transition=easing.inQuad} )
 					end
 				end
+			end
+
+			-- 檢查結束, 延遲掉落時間後更新gem
+			if j >= panelW then				
+				timer.performWithDelay(GM.dropDuration, updateGem)
 			end
 		end
 	end
@@ -657,19 +657,24 @@ function _:EliminateGem()
         end
     end
 
-    if #allClearGemPos > 0 then
-    	self.comboAmount = 0
-    	print( #allClearGemPos )
+    if #allClearGemPos > 0 then    	
 		for i=1, #allClearGemPos do
 			local t = timer.performWithDelay( GM.clearDelay*(i-1), clearGem )
 			t.params = {gemPos = allClearGemPos[i]}
 		end
 
-		timer.performWithDelay( GM.clearDelay*#allClearGemPos, addNewGem )
+		-- timer.performWithDelay( GM.clearDelay*#allClearGemPos, addNewGem )
 		timer.performWithDelay( GM.clearDelay*#allClearGemPos, gemDrop )
 	end
 	
 	allClearGemPos = nil
+end
+
+-- 初始資料並執行消除
+function _:EliminateGem()
+	-- combo初始
+	self.comboAmount = 0
+	self:Eliminate()	
 end
 
 -- 相對位置轉成實際位置, i:橫排, j:縱列
