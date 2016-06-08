@@ -101,50 +101,53 @@ local function updateProgress(prog)
 end
 
 -- 定位點移動 (目前無用)
--- local function locatePointMove( event )
---     local t = event.target
---     local phase = event.phase
+local function locatePointMove( event )
+    local t = event.target
+    local phase = event.phase
 
---     if "began" == phase then
---         display.getCurrentStage():setFocus( t )
---         t.isFocus = true
---         t.x0 = event.x - t.x
---         t.y0 = event.y - t.y
+    if "began" == phase then
+        display.getCurrentStage():setFocus( t )
+        t.isFocus = true
+        t.x0 = event.x - t.x
+        t.y0 = event.y - t.y
 
---     elseif t.isFocus then
---         if "moved" == phase then
---             t.x = event.x - t.x0
---             t.y = event.y - t.y0
---             if lineGroup[1] ~= nil then
---                 lineGroup[1]:removeSelf()
---             end
+    elseif t.isFocus then
+        if "moved" == phase then
+            t.x = event.x - t.x0
+            t.y = event.y - t.y0
+            if lineGroup[1] ~= nil then
+                lineGroup[1]:removeSelf()
+            end
 
---             if t.dir == GM.LocatePointDir[1] then
---                 locatePoint[2].y = t.y
---                 locatePoint[4].x = t.x
---             elseif t.dir == GM.LocatePointDir[2] then
---                 locatePoint[1].y = t.y
---                 locatePoint[3].x = t.x
---             elseif t.dir == GM.LocatePointDir[3] then
---                 locatePoint[4].y = t.y
---                 locatePoint[2].x = t.x
---             elseif t.dir == GM.LocatePointDir[4] then
---                 locatePoint[3].y = t.y
---                 locatePoint[1].x = t.x
---             end
+            if t.dir == GM.LocatePointDir[1] then
+                locatePoint[2].y = t.y
+                locatePoint[4].x = t.x
+            elseif t.dir == GM.LocatePointDir[2] then
+                locatePoint[1].y = t.y
+                locatePoint[3].x = t.x
+            elseif t.dir == GM.LocatePointDir[3] then
+                locatePoint[4].y = t.y
+                locatePoint[2].x = t.x
+            elseif t.dir == GM.LocatePointDir[4] then
+                locatePoint[3].y = t.y
+                locatePoint[1].x = t.x
+            end
 
---             local line = display.newLine( lineGroup, locatePoint[1].x, locatePoint[1].y, locatePoint[2].x, locatePoint[2].y )
---             line:append( locatePoint[3].x, locatePoint[3].y, locatePoint[4].x, locatePoint[4].y, locatePoint[1].x, locatePoint[1].y )
---             line:setStrokeColor( 1, 0, 0, 1 )
---             line.strokeWidth = 8
+            local line = display.newLine( lineGroup, locatePoint[1].x, locatePoint[1].y, locatePoint[2].x, locatePoint[2].y )
+            line:append( locatePoint[3].x, locatePoint[3].y, locatePoint[4].x, locatePoint[4].y, locatePoint[1].x, locatePoint[1].y )
+            line:setStrokeColor( 1, 0, 0, 1 )
+            line.strokeWidth = 8
 
---         elseif "ended" == phase or "cancelled" == phase then
---             display.getCurrentStage():setFocus( nil )
---             t.isFocus = false
-
---         end
---     end
--- end
+        elseif "ended" == phase or "cancelled" == phase then
+            for i=1,#locatePoint do
+                print("P" .. i .. ": " .. locatePoint[i].x .. ", " .. locatePoint[i].y)
+            end
+            
+            display.getCurrentStage():setFocus( nil )
+            t.isFocus = false
+        end
+    end
+end
 
 -- Gem的觸控事件
 function gemDrag( event )
@@ -626,7 +629,7 @@ function scene:create( event )
     soundManager = SoundManager:New(soundManager)
     infoManager = InfoManager:New(infoManager)
 
-    -- lineGroup = display.newGroup()
+    lineGroup = display.newGroup()
     progressBarGroup = display.newGroup()    
 
     soundManager:LoadSound("test01")
@@ -721,15 +724,15 @@ function scene:show( event )
         end
 
         -- 截圖的定位點
-        -- local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }        
+        local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }        
 
-        -- for i=1, #GM.LocatePointDir do
-        --     local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], 40*0.5 )
-        --     lPoint.dir = GM.LocatePointDir[i]
-        --     lPoint:addEventListener("touch", locatePointMove)
-        --     locatePoint = locatePoint or { }
-        --     locatePoint[i] = lPoint
-        -- end
+        for i=1, #GM.LocatePointDir do
+            local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], 40*0.5 )
+            lPoint.dir = GM.LocatePointDir[i]
+            lPoint:addEventListener("touch", locatePointMove)
+            locatePoint = locatePoint or { }
+            locatePoint[i] = lPoint
+        end
 
         -- Color Sample測試
         -- local scaleRatio = display.contentHeight/1920
