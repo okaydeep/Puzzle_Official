@@ -14,8 +14,8 @@ _.SpritePath	= "../img/sprite/"
 _.UIPath		= "../img/ui/"
 
 _.ButtonName = { "Regenerate", "Play back", "Load Image" }
-_.GemName = { "gem_red.png", "gem_orange.png", "gem_green.png", "gem_blue.png", "gem_purple.png", "gem_pink.png" }
-_.Color = { "red", "orange", "green", "blue", "purple", "pink" }
+_.GemName = { "gem_red.png", "gem_blue.png", "gem_green.png", "gem_orange.png", "gem_purple.png", "gem_pink.png" }
+_.Color = { "red", "blue", "green", "orange", "purple", "pink" }
 _.ColorIdxArr = { 1, 2, 3, 4, 5, 6 }
 
 _.LocatePointDir = { "TopLeft", "TopRight", "BottomRight", "BottomLeft" }

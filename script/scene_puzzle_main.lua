@@ -53,6 +53,11 @@ local btns
 -- 進度條
 local progressView
 local progressText
+local PB_bottom
+local PB_inner
+local PB_maskRight
+local PB_maskLeft
+local PB_maskMiddle
 
 -- 定位點
 local locatePoint
@@ -65,6 +70,11 @@ local moveSave
 -- 文字訊息
 local comboText
 local dragTimeText
+
+-- 盤面設定
+local panelColor
+local panelWidth
+local panelHeight
 
 -- For Debug
 local loadingTotalAmount
@@ -89,15 +99,15 @@ end
 
 -- 更新進度條, prog:進度,範圍0.0~1.0
 local function updateProgress(prog)
-    if prog > 0.5 then
+    if prog <= 0.5 then
         progressText:setFillColor( 1, 1, 1 )
-    elseif prog <= 0.5 then
+    elseif prog > 0.5 then
         progressText:setFillColor( 0, 0, 0 )
     end
 
     progressText.text = string.format("%.1f%%", prog*100)
 
-    progressView:setProgress(prog)    
+    -- progressView:setProgress(prog)
 end
 
 -- 定位點移動 (目前無用)
@@ -381,7 +391,8 @@ function updateStatus()
     local progress = loadingIdx/loadingTotalAmount
     if progress > 1 then progress = 1 end
 
-    updateProgress(progress)
+    -- updateProgress(progress)
+    setProgress(progress)
 
     if loadingIdx <= loadingTotalAmount then
         setStatus( string.format("Loading...%.1f%%", progress*100) )
@@ -503,8 +514,6 @@ function updateDragTime()
     if beginDrag == true then
         local deltaTime = system.getTimer()-preSystemTime
         dragTime = dragTime + deltaTime
-
-        -- infoManager:UpdateItemContent(4, elapsedTime)
         infoManager:UpdateItemContent(4, string.format("%.2f", dragTime/1000))
     end
 
@@ -608,14 +617,34 @@ function buttonEvent(event)
     elseif phase == "ended" then
         if target.id == 1 then
             updateComboText(0)
-            local colorIdxArr = {1, 2, 3, 4}            
-            stageManager:GenerateGem(scene.view, colorIdxArr, nil, false, gemDrag)
+            infoManager:UpdateItemContent(4, "0.00")            
+            stageManager:GenerateGem(scene.view, panelColor, nil, false, gemDrag)
         elseif target.id == 2 then
             playback()
         elseif target.id == 3 then
             loadImage()
             -- selectPhoto()
         end
+    end
+end
+
+function setProgress(prog)
+    local p = 1-prog
+    progressBarGroup.isVisible = true
+    -- updateProgress(prog)
+
+    if p <= 0 then
+        PB_maskRight.isVisible = false
+        PB_maskLeft.isVisible = false
+        PB_maskMiddle.isVisible = false
+    elseif p > 0 and p <= 1 then
+        PB_maskRight.isVisible = true
+        PB_maskLeft.isVisible = true
+        PB_maskMiddle.isVisible = true
+        
+        local newWidth = math.round(308*p)
+        PB_maskMiddle.width = newWidth
+        PB_maskLeft.x = 148-newWidth+1
     end
 end
 
@@ -646,10 +675,12 @@ function scene:show( event )
         dragTime = 0
 
         -- 欲使用的gem引數
-        local colorIdxArr = {1, 2, 3, 4}
+        panelColor = {1, 2, 3, 4, 5, 6}
 
         -- 初始盤面
-        stageManager:SetPanelSize(5, 5)
+        panelWidth = 6
+        panelHeight = 5
+        stageManager:SetPanelSize(panelWidth, panelHeight)
         stageManager:InitGem()
 
         -- 延遲500ms產生盤面 (匿名函式Anonymous Function)
@@ -681,7 +712,7 @@ function scene:show( event )
         infoManager:AddItem(1, "System Memory: ", "0 KB")
         infoManager:AddItem(2, "Texture Memory: ", "0.000 MB")
         infoManager:AddItem(3, "Current Status: ")
-        infoManager:AddItem(4, "拖曳時間: ", "0")
+        infoManager:AddItem(4, "拖曳時間: ", "0.00")
         infoManager:AddItem(5, "Combo: ", "0")
 
         if (system.getInfo("environment") == "simulator") then
@@ -748,56 +779,41 @@ function scene:show( event )
         -- imgForParse = gemSample
 
         -- 進度條初始
-        options = {
-            width = 64,
-            height = 64,
-            numFrames = 6,
-            sheetContentWidth = 384,
-            sheetContentHeight = 64
-        }
-        local progressSheet = graphics.newImageSheet( GM.UIPath .. "widget-progress-view02.png", options )
-        
-        progressView = widget.newProgressView(
-            {
-                sheet = progressSheet,
-                fillOuterLeftFrame = 1,
-                fillOuterMiddleFrame = 2,
-                fillOuterRightFrame = 3,
-                fillOuterWidth = 64,
-                fillOuterHeight = 64,
-                fillInnerLeftFrame = 4,
-                fillInnerMiddleFrame = 5,
-                fillInnerRightFrame = 6,
-                fillWidth = 64,
-                fillHeight = 64,
-                x = display.contentCenterX,
-                y = display.contentCenterY,
-                left = 50,
-                top = 200,
-                width = 440,
-                isAnimated = false
-            }
-        )        
+        -- options = {
+        --     text = "",
+        --     width = 600,     --required for multi-line and alignment
+        --     font = native.systemFontBold,   
+        --     fontSize = 14,
+        --     align = "center"  --new alignment parameter
+        -- }        
+        -- progressText = display.newText( options )
+        -- progressText.text = "0%"        
+        -- progressText:setFillColor( 1, 1, 1 )
 
-        options = {
-            text = "",
-            width = 600,     --required for multi-line and alignment
-            font = native.systemFontBold,   
-            fontSize = 20,
-            align = "center"  --new alignment parameter
-        }
-        
-        progressText = display.newText( options )
-        progressText.text = "0%"
-        progressText.x = display.contentCenterX
-        progressText.y = display.contentCenterY
-        progressText:setFillColor( 1, 1, 1 )
+        -- 進度條物件初始
+        PB_bottom = display.newImageRect(GM.ImgRootPath .. "ui/PB_bottom_01.png", 318, 20)          -- PB底部
+        PB_inner = display.newImageRect(GM.ImgRootPath .. "ui/PB_inner_01.png", 318, 20)            -- PB進度
+        PB_maskRight = display.newImageRect(GM.ImgRootPath .. "ui/PB_maskRight_01.png", 5, 14)      -- PB遮罩右側
+        PB_maskRight.anchorX = 0
+        PB_maskRight.x = PB_maskRight.x+153
+        PB_maskLeft = display.newImageRect(GM.ImgRootPath .. "ui/PB_maskLeft_01.png", 5, 14)        -- PB遮罩左側
+        PB_maskLeft.anchorX = 0
+        PB_maskLeft.x = PB_maskLeft.x+148
+        PB_maskMiddle = display.newImageRect(GM.ImgRootPath .. "ui/PB_maskMiddle_01.png", 154, 14)  -- PB遮罩中間
+        PB_maskMiddle.anchorX = 1
+        PB_maskMiddle.x = PB_maskMiddle.x+154
 
-        progressBarGroup:insert(progressView)
-        progressBarGroup:insert(progressText)
+        progressBarGroup:insert(PB_bottom)
+        progressBarGroup:insert(PB_inner)
+        progressBarGroup:insert(PB_maskRight)
+        progressBarGroup:insert(PB_maskLeft)
+        progressBarGroup:insert(PB_maskMiddle)
+        -- progressBarGroup:insert(progressText)
+
+        -- progressBarGroup:scale(1.4, 1.4)
         progressBarGroup.isVisible = false
-        progressBarGroup.y = progressBarGroup.y-200
-
+        progressBarGroup.x = display.contentCenterX
+        progressBarGroup.y = display.contentCenterY
     elseif phase == "did" then
         
     end
