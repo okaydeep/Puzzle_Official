@@ -20,8 +20,52 @@ local googleRegistrationId = nil
 
 ---------------------------------------------------------------------------------
 
+function ClearTable(table)
+    for k,v in pairs(table) do
+        if type(table[k] ~= "table") then
+            table[k] = nil
+        else
+            if noInnerTable(table[k]) == true then
+                table[k] = nil
+            else
+                ClearTable(table[k])
+            end
+        end
+    end
+
+    function noInnerTable(t)
+        if type(t) ~= "table" then return end
+
+        local tNum = 0
+
+        for k,v in pairs(t) do
+            if type(t[k]) == "table" then
+                tNum = tNum+1
+            end
+        end
+
+        if tNum <= 0 then
+            return true
+        else
+            return false
+        end
+    end
+end
+
 function scene:create( event )
     local sceneGroup = self.view
+
+    local outTable = {}
+    outTable.it = {}
+    outTable.it.var1 = "var1"
+    outTable.it.it = {}
+    outTable.it.it.var1 = "var11"    
+
+    print(outTable.it.var1)
+    print(outTable.it.it.var1)
+    ClearTable(outTable)
+    print(outTable.it.var1)
+    print(outTable.it.it.var1)
 
     -- local co = coroutine.create(function()
     --     local idx = 1
