@@ -1,4 +1,8 @@
 
+-- ===================================
+-- 全域管理
+-- ===================================
+
 GlobalManager = { }
 _ = GlobalManager
 
@@ -9,9 +13,9 @@ function _:New(object)
 	return object
 end
 
-_.ImgRootPath	= "../img/"
-_.SpritePath	= "../img/sprite/"
-_.UIPath		= "../img/ui/"
+_.ImgRootPath	= "img/"
+_.SpritePath	= "img/sprite/"
+_.UIPath		= "img/ui/"
 
 _.ButtonName = { "Regenerate", "Play back", "Load Image" }
 _.GemName = { "gem_red.png", "gem_blue.png", "gem_green.png", "gem_orange.png", "gem_purple.png", "gem_pink.png" }
@@ -58,9 +62,7 @@ _.PAD_parseYOffset = 177*_.PAD_scaleRatio
 _.PAD_parseStartPosX = display.contentCenterX-_.PAD_parseXOffset*3
 _.PAD_parseStartPosY = display.contentCenterY-57
 
-_.ColorR = { }
-_.ColorG = { }
-_.ColorB = { }
+_.ColorH = { }
 _.parsedColor = {
 	{ },
 	{ },
@@ -102,77 +104,50 @@ function _.onColorSample( event )
 	-- print( "G = " .. event.g )
 	-- print( "B = " .. event.b )
 	-- print( "A = " .. event.a )
-
-	GlobalManager.ColorR[#(GlobalManager.ColorR)+1] = event.r
-	GlobalManager.ColorG[#(GlobalManager.ColorG)+1] = event.g
-	GlobalManager.ColorB[#(GlobalManager.ColorB)+1] = event.b
+	local h = GlobalManager.rgbToHsv(event.r, event.g, event.b)
+	GlobalManager.ColorH[#(GlobalManager.ColorH)+1] = h
 end
 
 -- 分析顏色, verticalIdx:第幾橫排, horizontalIdx:第幾縱列
 function _:DoColorSample(verticalIdx, horizontalIdx)
-	local xOffset, yOffset, finalPosX, finalPosY = 0, 0, 0, 0
-	local sumColorR, sumColorG, sumColorB = 0, 0, 0
-	local avgColorR, avgColorG, avgColorB = 0, 0, 0
+	local xOffset, yOffset, finalPosX, finalPosY = 0, 0, 0, 0	
 	
-	-- xOffset = horizontalIdx-3
-	-- yOffset = verticalIdx-3
+	xOffset = horizontalIdx-3
+	yOffset = verticalIdx-3
 
 	finalPosX = GlobalManager.PAD_parseStartPosX+GlobalManager.PAD_parseXOffset*0.5+(GlobalManager.PAD_parseXOffset*(horizontalIdx-1))
 	finalPosY = GlobalManager.PAD_parseStartPosY+GlobalManager.PAD_parseYOffset*0.5+(GlobalManager.PAD_parseYOffset*(verticalIdx-1))
-	-- display.newRect( finalPosX, finalPosY, 3, 3 )	-- 偵測位置測試點	
 
-	if #(GlobalManager.ColorR) > 0 then
-		GlobalManager.ColorR = nil
-		GlobalManager.ColorR = { }
-	end
-
-	if #(GlobalManager.ColorG) > 0 then
-		GlobalManager.ColorG = nil
-		GlobalManager.ColorG = { }
-	end
-
-	if #(GlobalManager.ColorB) > 0 then
-		GlobalManager.ColorB = nil
-		GlobalManager.ColorB = { }
-	end
+	-- display.newRect( finalPosX, finalPosY, 3, 3 )	-- 偵測位置測試點
 
 	-- 九個取樣點
 	display.colorSample( finalPosX, finalPosY, GlobalManager.onColorSample )
-	display.colorSample( finalPosX+10, finalPosY+10, GlobalManager.onColorSample )
-	display.colorSample( finalPosX, finalPosY+10, GlobalManager.onColorSample )
-	display.colorSample( finalPosX-10, finalPosY+10, GlobalManager.onColorSample )
-	display.colorSample( finalPosX-10, finalPosY, GlobalManager.onColorSample )
-	display.colorSample( finalPosX-10, finalPosY-10, GlobalManager.onColorSample )
-	display.colorSample( finalPosX, finalPosY-10, GlobalManager.onColorSample )
-	display.colorSample( finalPosX+10, finalPosY-10, GlobalManager.onColorSample )
-	display.colorSample( finalPosX+10, finalPosY, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX+10, finalPosY+10, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX, finalPosY+10, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX-10, finalPosY+10, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX-10, finalPosY, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX-10, finalPosY-10, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX, finalPosY-10, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX+10, finalPosY-10, GlobalManager.onColorSample )
+	-- display.colorSample( finalPosX+10, finalPosY, GlobalManager.onColorSample )
 
-	for i=1, #(GlobalManager.ColorR) do
-		sumColorR = sumColorR+GlobalManager.ColorR[i]
-		sumColorG = sumColorG+GlobalManager.ColorG[i]
-		sumColorB = sumColorB+GlobalManager.ColorB[i]
-	end
-
-	avgColorR = sumColorR*(1/#(GlobalManager.ColorR))
-	avgColorG = sumColorG*(1/#(GlobalManager.ColorR))
-	avgColorB = sumColorB*(1/#(GlobalManager.ColorR))
-
-	local colorIdx = GlobalManager.getColorByRGB(avgColorR, avgColorG, avgColorB)
+	-- local colorIdx = GlobalManager.getColorByRGB(avgColorR, avgColorG, avgColorB)
 	-- print (verticalIdx .. "," .. horizontalIdx .. ": " .. colorIdx .. ". " .. avgColorR .. "," .. avgColorG .. "," .. avgColorB)	-- 分析顏色資訊
-	
-	self.parsedColor[verticalIdx][horizontalIdx] = colorIdx	
 
-	if #(GlobalManager.ColorR) >= 9 then
+	-- if #(GlobalManager.ColorR) >= 1 then
 		if type(GlobalManager.parseColorCallback[1]) == "function" then
 			GlobalManager.parseColorCallback[1]()
 			GlobalManager.parseColorCallback[1] = nil
 		end
-	end
+	-- end
 end
 
 -- 分析平均顏色決定種類
 function _.getColorByRGB(r, g, b)
 	local colorIdx = 0
+
+	-- local h, s, v = GlobalManager.rgbToHsv(r, g, b, 255)
+	-- print("H: " .. h .. ", S: " .. s .. ", V: " .. v)
 
 	if r > 0.8 then
 		if g < 0.7 and g > 0.4 then
@@ -216,6 +191,26 @@ function _.getColorByRGB(r, g, b)
 	return colorIdx
 end
 
+function _.hToColorIdx( h )
+	local colorIdx = 1
+
+	if h > 0 and h < 20 then
+		colorIdx = 1
+	elseif h > 40 and h < 80 then
+		colorIdx = 4
+	elseif h > 120 and h < 140 then
+		colorIdx = 3
+	elseif h > 180 and h < 220 then
+		colorIdx = 2
+	elseif h > 280 and h < 320 then
+		colorIdx = 5
+	elseif h > 320 and h < 340 then
+		colorIdx = 6
+	end
+
+	return colorIdx
+end
+
 function print_r ( t )  
     local print_r_cache={}
     local function sub_print_r(t,indent)
@@ -248,6 +243,87 @@ function print_r ( t )
         sub_print_r(t,"  ")
     end
     print()
+end
+
+function _.rgbToHsv(r, g, b)
+  r, g, b = r / 255, g / 255, b / 255
+  local max, min = math.max(r, g, b), math.min(r, g, b)
+  local h, s, v
+  v = max
+
+  local d = max - min
+  if max == 0 then s = 0 else s = d / max end
+
+  if max == min then
+    h = 0 -- achromatic
+  else
+    if max == r then
+    h = (g - b) / d
+    if g < b then h = h + 6 end
+    elseif max == g then h = (b - r) / d + 2
+    elseif max == b then h = (r - g) / d + 4
+    end
+    h = h / 6
+  end
+
+  -- 額外增加角度
+  h = h * 360
+
+  return h, s, v
+end
+
+function _.hsvToRgb(h, s, v)
+  local r, g, b
+
+  local i = Math.floor(h * 6);
+  local f = h * 6 - i;
+  local p = v * (1 - s);
+  local q = v * (1 - f * s);
+  local t = v * (1 - (1 - f) * s);
+
+  i = i % 6
+
+  if i == 0 then r, g, b = v, t, p
+  elseif i == 1 then r, g, b = q, v, p
+  elseif i == 2 then r, g, b = p, v, t
+  elseif i == 3 then r, g, b = p, q, v
+  elseif i == 4 then r, g, b = t, p, v
+  elseif i == 5 then r, g, b = v, p, q
+  end
+
+  return r * 255, g * 255, b * 255
+end
+
+function _.ClearTable(table)
+    for k,v in pairs(table) do
+        if type(table[k] ~= "table") then
+            table[k] = nil
+        else
+            if noInnerTable(table[k]) == true then
+                table[k] = nil
+            else
+                ClearTable(table[k])
+            end
+        end
+    end
+
+    function noInnerTable(t)
+        if type(t) ~= "table" then return end
+
+        local tNum = 0
+
+        for k,v in pairs(t) do
+            if type(t[k]) == "table" then
+                tNum = tNum+1
+            end
+        end
+
+        if tNum <= 0 then
+            return true
+        else
+            return false
+        end
+    end
 end
 
 table.print = print_r

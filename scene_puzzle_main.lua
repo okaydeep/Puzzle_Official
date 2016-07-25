@@ -311,26 +311,27 @@ function gemDrag( event )
 end
 
 -- 分析點擊位置的顏色 (目前無用)
--- function colorSampleTouch( event )
---     local t = event.target
---     local phase = event.phase
+function colorSampleTouch( event )
+    local t = event.target
+    local phase = event.phase
 
---     if "began" == phase then
---         display.getCurrentStage():setFocus( t )
---         t.isFocus = true
---         GM:DoColorSample(event.x, event.y)
---     elseif t.isFocus then
---         if "moved" == phase then
---         elseif "ended" == phase or "cancelled" == phase then
---             display.getCurrentStage():setFocus( nil )
---             t.isFocus = false
---         end
---     end
--- end
+    if "began" == phase then
+        display.getCurrentStage():setFocus( t )
+        t.isFocus = true
+        display.colorSample( event.x, event.y, GM.onColorSample )        
+    elseif t.isFocus then
+        if "moved" == phase then
+        elseif "ended" == phase or "cancelled" == phase then
+            display.getCurrentStage():setFocus( nil )
+            t.isFocus = false
+        end
+    end
+end
 
 -- 讀取分析圖片
 function loadImage()
     local panelW, panelH = stageManager:GetPanelSize()
+    imgForParse.isVisible = true
     GM.loadFromImage = true
     loadingTotalAmount = panelW*panelH
     processIdx = 1    
@@ -343,9 +344,28 @@ function loadImageFinished()
     GM.loadFromImage = false
     stageManager:GenerateGem(scene.view, nil, GM.parsedColor, false, gemDrag)
     imgForParse.isVisible = false
-    -- gemSample.isVisible = false
-    -- gemSample.x = display.contentCenterX
-    -- gemSample.y = display.contentCenterY+300
+    -- imgForParse:removeSelf()
+end
+
+function loadImageFinishedTmp()    
+    -- print("==============================")
+    for i=1, 5 do
+        for j=1, 6 do
+            GM.parsedColor[i][j] = GM.hToColorIdx(GM.ColorH[(i-1)*6+j])
+        end
+        -- print(GM.hToColorIdx(GM.ColorH[(i-1)*6+1]),
+        --     GM.hToColorIdx(GM.ColorH[(i-1)*6+2]),
+        --     GM.hToColorIdx(GM.ColorH[(i-1)*6+3]),
+        --     GM.hToColorIdx(GM.ColorH[(i-1)*6+4]),
+        --     GM.hToColorIdx(GM.ColorH[(i-1)*6+5]),
+        --     GM.hToColorIdx(GM.ColorH[(i-1)*6+6]))
+        -- print("==============================")
+    end
+    -- GM.ColorH = nil
+    -- GM.ColorH = { }
+    GM.ClearTable(GM.ColorH)
+
+    loadImageFinished()
 end
 
 -- 讀取分析圖片(使用計時器延遲呼叫)
@@ -374,7 +394,8 @@ function doLoadImage()
             GM.parseColorCallback[1] = doLoadImage
         else
             updateStatus()
-            GM.parseColorCallback[1] = loadImageFinished
+            -- GM.parseColorCallback[1] = loadImageFinished
+            GM.parseColorCallback[1] = loadImageFinishedTmp
         end
         GM:DoColorSample(vIdx, hIdx)
     end)
@@ -622,8 +643,8 @@ function buttonEvent(event)
         elseif target.id == 2 then
             playback()
         elseif target.id == 3 then
-            loadImage()
-            -- selectPhoto()
+            -- loadImage()
+            selectPhoto()
         end
     end
 end
@@ -755,15 +776,15 @@ function scene:show( event )
         end
 
         -- 截圖的定位點
-        local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }        
+        -- local locatePointPos = { {200, 200}, {300, 200}, {300, 300}, {200, 300} }        
 
-        for i=1, #GM.LocatePointDir do
-            local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], 40*0.5 )
-            lPoint.dir = GM.LocatePointDir[i]
-            lPoint:addEventListener("touch", locatePointMove)
-            locatePoint = locatePoint or { }
-            locatePoint[i] = lPoint
-        end
+        -- for i=1, #GM.LocatePointDir do
+        --     local lPoint = display.newCircle( locatePointPos[i][1], locatePointPos[i][2], 40*0.5 )
+        --     lPoint.dir = GM.LocatePointDir[i]
+        --     lPoint:addEventListener("touch", locatePointMove)
+        --     locatePoint = locatePoint or { }
+        --     locatePoint[i] = lPoint
+        -- end
 
         -- Color Sample測試
         -- local scaleRatio = display.contentHeight/1920
@@ -771,7 +792,7 @@ function scene:show( event )
         -- gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
         -- gemSample.x = display.contentCenterX
         -- gemSample.y = display.contentCenterY
-        -- -- gemSample:addEventListener("touch", colorSampleTouch)
+        -- gemSample:addEventListener("touch", colorSampleTouch)
 
         -- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
         -- local yOffset = (1080*scaleRatio)/6
@@ -787,7 +808,7 @@ function scene:show( event )
         --     align = "center"  --new alignment parameter
         -- }        
         -- progressText = display.newText( options )
-        -- progressText.text = "0%"        
+        -- progressText.text = "0%"
         -- progressText:setFillColor( 1, 1, 1 )
 
         -- 進度條物件初始
@@ -813,7 +834,11 @@ function scene:show( event )
         -- progressBarGroup:scale(1.4, 1.4)
         progressBarGroup.isVisible = false
         progressBarGroup.x = display.contentCenterX
-        progressBarGroup.y = display.contentCenterY
+        progressBarGroup.y = display.contentCenterY-100
+
+        -- print(GM.rgbToHsv(255, 0, 0, 255))
+        -- print(GM.rgbToHsv(0, 255, 0, 255))
+        -- print(GM.rgbToHsv(0, 0, 255, 255))
     elseif phase == "did" then
         
     end

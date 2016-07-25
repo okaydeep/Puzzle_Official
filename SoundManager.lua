@@ -25,7 +25,7 @@ _.sound = { }
 -- 讀取音源, soundName:名稱
 function _:LoadSound(soundName)
 	if self.sound[soundName] == nil then
-		self.sound[soundName] = audio.loadSound( "../snd/" .. soundName .. ".wav" )
+		self.sound[soundName] = audio.loadSound( "snd/" .. soundName .. ".wav" )
 	else
 		print("Specific sound has loaded")
 	end
