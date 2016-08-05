@@ -14,6 +14,7 @@ local sceneName = ...
 
 local composer = require( "composer" )
 local widget = require( "widget" )
+local motionHnd = require( "MotionHandler" )
 
 -- Load scene with same root filename as this file
 local scene = composer.newScene( sceneName )
@@ -683,6 +684,9 @@ function scene:create( event )
     progressBarGroup = display.newGroup()    
 
     soundManager:LoadSound("test01")
+
+    local myRectangle = display.newRect( display.contentCenterX, display.contentCenterY, 10, 10 )    
+    motionHnd.Move(myRectangle, 100, 0, 1000, easing.outExpo)
 end
 
 function scene:show( event )
