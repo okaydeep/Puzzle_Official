@@ -10,15 +10,15 @@
 SoundManager = { }
 _ = SoundManager
 
+-- 音效根目錄 (./snd/)
+local soundPath = system.pathForFile(nil, system.ResourceDirectory) .. "\\snd\\"
+
 function _:New(object)
 	object = object or {}
 	setmetatable(object, self)
 	self.__index = self
 	return object
 end
-
-_.moveSndPath		= ""
-_.clickBtnSndPath	= ""
 
 _.sound = { }
 
@@ -39,3 +39,17 @@ function _:PlaySound(soundName)
 		print("No specific sound to play")
 	end
 end
+
+-- 改變當前路徑
+lfs.chdir(soundPath)
+
+-- 讀取所有wav檔
+for file in lfs.dir(soundPath) do
+    local last_three = string.sub( file, #file - 2, #file)
+    if last_three == "wav" then
+    	_:LoadSound(string.sub( file, 1, -5))
+    	-- print(string.sub( file, 1, -5))
+    end
+end
+
+print("test!!!")

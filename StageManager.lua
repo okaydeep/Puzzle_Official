@@ -6,6 +6,9 @@
 require( "GlobalManager" )
 local GM = GlobalManager
 
+require( "SoundManager" )
+local SM = SoundManager
+
 require( "Gem" )
 
 -- Class sample
@@ -641,6 +644,7 @@ function _:Eliminate()
         if self.callback["updatecombo"] ~= nil then
         	self.comboAmount = self.comboAmount+1
         	self.callback["updatecombo"](self.comboAmount)
+        	SM:PlaySound("gem_clear01")
         end
 	end
 

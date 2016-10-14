@@ -14,6 +14,7 @@ local sceneName = ...
 
 local composer = require( "composer" )
 local widget = require( "widget" )
+local lfs = require( "lfs" )
 local motionHnd = require( "MotionHandler" )
 
 -- Load scene with same root filename as this file
@@ -280,20 +281,25 @@ function gemDrag( event )
                     if touchedGemJ <= 1 then
                         collidedGemJ = touchedGemJ
                     else
-                        collidedGemJ = touchedGemJ-1    
+                        collidedGemJ = touchedGemJ-1
                     end
                 end
             end                
 
             -- 如果有觸碰到其它gem
             if collidedGemI ~= nil and collidedGemJ ~= nil then
+                -- 如果是觸碰的gem為自己則無效
+                if collidedGemI == touchedGemI and collidedGemJ == touchedGemJ then
+                    return
+                end                
                 stageManager:GemSwap(touchedGemI, touchedGemJ, collidedGemI, collidedGemJ)
+                soundManager:PlaySound("gem_move04")
                 touchedGemJ = collidedGemJ
-                touchedGemI = collidedGemI                
+                touchedGemI = collidedGemI
                 collidedGemI = nil
                 collidedGemJ = nil
                 moveSave[#moveSave+1] = {touchedGemJ, touchedGemI}
-                beginDrag = true                
+                beginDrag = true
                 --print(#moveSave)
             end
         elseif "ended" == phase or "cancelled" == phase then
@@ -545,7 +551,7 @@ Runtime:addEventListener("enterFrame", updateDragTime)
 
 -- 更新combo數
 function updateComboText(combo)    
-    infoManager:UpdateItemContent(5, combo)
+    infoManager:UpdateItemContent(5, combo)    
 end
 
 -- 更新消耗記憶體
@@ -622,8 +628,8 @@ function buttonEvent(event)
     local target = event.target
     local phase = event.phase
 
-    if phase == "began" then
-        soundManager:PlaySound("test01")
+    if phase == "began" then        
+        soundManager:PlaySound("button_press01")        
 
         if target.id == 1 then
 
@@ -644,8 +650,8 @@ function buttonEvent(event)
         elseif target.id == 2 then
             playback()
         elseif target.id == 3 then
-            -- loadImage()
-            selectPhoto()
+            loadImage()
+            -- selectPhoto()
         end
     end
 end
@@ -681,9 +687,7 @@ function scene:create( event )
     infoManager = InfoManager:New(infoManager)
 
     lineGroup = display.newGroup()
-    progressBarGroup = display.newGroup()    
-
-    soundManager:LoadSound("test01")
+    progressBarGroup = display.newGroup()
 
     local myRectangle = display.newRect( display.contentCenterX, display.contentCenterY, 10, 10 )    
     motionHnd.Move(myRectangle, 100, 0, 1000, easing.outExpo)
@@ -791,17 +795,17 @@ function scene:show( event )
         -- end
 
         -- Color Sample測試
-        -- local scaleRatio = display.contentHeight/1920
+        local scaleRatio = display.contentHeight/1920
         
-        -- gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
-        -- gemSample.x = display.contentCenterX
-        -- gemSample.y = display.contentCenterY
-        -- gemSample:addEventListener("touch", colorSampleTouch)
+        gemSample = display.newImageRect(GM.ImgRootPath .. "tmp3.png", 1080*scaleRatio, 1920*scaleRatio)        
+        gemSample.x = display.contentCenterX
+        gemSample.y = display.contentCenterY
+        gemSample:addEventListener("touch", colorSampleTouch)
 
-        -- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
-        -- local yOffset = (1080*scaleRatio)/6
-        -- display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
-        -- imgForParse = gemSample
+        local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
+        local yOffset = (1080*scaleRatio)/6
+        display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
+        imgForParse = gemSample
 
         -- 進度條初始
         -- options = {
