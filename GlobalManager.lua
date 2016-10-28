@@ -18,6 +18,7 @@ _.SpritePath	= "img/sprite/"
 _.UIPath		= "img/ui/"
 
 _.ButtonName = { "Regenerate", "Play back", "Load Image" }
+_.ScreenRatioSwitchButtonName = { "16:9", "4:3" }
 _.GemName = { "gem_red.png", "gem_blue.png", "gem_green.png", "gem_orange.png", "gem_purple.png", "gem_pink.png" }
 _.Color = { "red", "blue", "green", "orange", "purple", "pink" }
 _.ColorIdxArr = { 1, 2, 3, 4, 5, 6 }
@@ -54,11 +55,8 @@ _.playbackMoveDuration = 250
 
 -- PAD截圖預設位置
 _.PAD_scaleRatio = display.contentHeight/1920
---_.PAD_parseXOffset = (1080*_.PAD_scaleRatio)/6-1
 _.PAD_parseXOffset = 177*_.PAD_scaleRatio
--- _.PAD_parseYOffset = (1080*_.PAD_scaleRatio)/6-1
 _.PAD_parseYOffset = 177*_.PAD_scaleRatio
--- _.PAD_parseStartPosX = display.contentCenterX-576*0.5+3
 _.PAD_parseStartPosX = display.contentCenterX-_.PAD_parseXOffset*3
 _.PAD_parseStartPosY = display.contentCenterY-57
 
@@ -72,6 +70,20 @@ _.parsedColor = {
 }
 
 _.parseColorCallback = { }
+
+-- 設定螢幕比例為16:9(預設)
+function _:SetScreenRatio16_9()
+    self.PAD_parseXOffset = 177*self.PAD_scaleRatio
+    self.PAD_parseYOffset = 177*self.PAD_scaleRatio
+    self.PAD_parseStartPosY = display.contentCenterY-57
+end
+
+-- 設定螢幕比例為4:3
+function _:SetScreenRatio4_3()
+    self.PAD_parseXOffset = 163*self.PAD_scaleRatio
+    self.PAD_parseYOffset = 163*self.PAD_scaleRatio
+    self.PAD_parseStartPosY = display.contentCenterY
+end
 
 -- 深層拷貝(可以複製table), object:欲複製的目標物件
 function _.deepCopy(object)
@@ -202,9 +214,9 @@ function _.hToColorIdx( h )
 		colorIdx = 3
 	elseif h > 180 and h < 220 then
 		colorIdx = 2
-	elseif h > 280 and h < 320 then
+	elseif h > 280 and h < 310 then
 		colorIdx = 5
-	elseif h > 320 and h < 340 then
+	elseif h > 310 and h < 340 then
 		colorIdx = 6
 	end
 

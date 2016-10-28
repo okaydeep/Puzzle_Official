@@ -51,5 +51,3 @@ for file in lfs.dir(soundPath) do
     	-- print(string.sub( file, 1, -5))
     end
 end
-
-print("test!!!")

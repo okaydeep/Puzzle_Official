@@ -19,7 +19,7 @@ function _:New(object)
 	object = object or {}
 	setmetatable(object, self)
 	self.__index = self
-	return object
+    return object
 end
 
 _.gemWidth = 110
@@ -61,7 +61,7 @@ function _:RemoveCallback( name )
 	end
 end
 
--- 取得目前盤面寬長的比例
+-- 取得目前盤面寬長
 function _:GetPanelSize()
 	return self.panelWidth, self.panelHeight
 end
