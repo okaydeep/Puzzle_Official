@@ -698,8 +698,8 @@ function scene:create( event )
 	progressBarGroup = display.newGroup()
 	menuGroup = display.newGroup()
 
-	local myRectangle = display.newRect( display.contentCenterX, display.contentCenterY, 10, 10 )    
-	motionHnd.Move(myRectangle, 100, 0, 1000, easing.outExpo)
+	-- local myRectangle = display.newRect( display.contentCenterX, display.contentCenterY, 10, 10 )    
+	-- motionHnd.Move(myRectangle, 100, 0, 1000, easing.outExpo)
 end
 
 function scene:show( event )
@@ -801,17 +801,17 @@ function scene:show( event )
 		-- end
 
 		-- Color Sample測試
-		local scaleRatio = display.contentHeight/1920
+		-- local scaleRatio = display.contentHeight/1920
 		
-		gemSample = display.newImageRect(GM.ImgRootPath .. "tmp5.png", 1080*scaleRatio, 1920*scaleRatio)        
-		gemSample.x = display.contentCenterX
-		gemSample.y = display.contentCenterY
-		gemSample:addEventListener("touch", colorSampleTouch)
+		-- gemSample = display.newImageRect(GM.ImgRootPath .. "tmp5.png", 1080*scaleRatio, 1920*scaleRatio)        
+		-- gemSample.x = display.contentCenterX
+		-- gemSample.y = display.contentCenterY
+		-- gemSample:addEventListener("touch", colorSampleTouch)
 
-		local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
-		local yOffset = (1080*scaleRatio)/6
-		display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
-		imgForParse = gemSample
+		-- local myRectangle = display.newRect( display.contentCenterX-576*0.5+3, display.contentCenterY-57, 3, 3 )
+		-- local yOffset = (1080*scaleRatio)/6
+		-- display.newRect( display.contentCenterX-576*0.5+3+yOffset, display.contentCenterY-57+yOffset, 3, 3 )
+		-- imgForParse = gemSample
 
 		-- 進度條初始
 		-- options = {
@@ -857,14 +857,15 @@ function scene:show( event )
 		-- menuBG = display.newImageRect(GM.ImgRootPath .. "ui/menu_bg01.png", 200, 600)
 		-- menuBG.x = 300
 		-- menuBG.y = 300
-		local paint = {
-			type = "gradient",
-			color1 = { 0.4, 0.2, 1 },
-			color2 = { 0.2, 0.2, 1 },
-			direction = "right"
-		}
-		local rect = display.newRect( 200, 200, 300, 400 )
-		rect.fill = paint
+		
+		-- local paint = {
+		-- 	type = "gradient",
+		-- 	color1 = { 0.4, 0.2, 1 },
+		-- 	color2 = { 0.2, 0.2, 1 },
+		-- 	direction = "right"
+		-- }
+		-- local rect = display.newRect( 200, 200, 300, 400 )
+		-- rect.fill = paint
 
 		if screenRatioSwitchBtns == nil then
 			screenRatioSwitchBtns = { }
@@ -882,9 +883,9 @@ function scene:show( event )
 			menuGroup:insert(screenRatioSwitchBtns[i])
 		end
 
-		menuGroup:insert(rect)
-		menuGroup:toFront()
-		menuGroup.x = menuGroup.x + 250
+		-- menuGroup:insert(rect)
+		-- menuGroup:toFront()
+		-- menuGroup.x = menuGroup.x + 250
 
 	elseif phase == "did" then
 		

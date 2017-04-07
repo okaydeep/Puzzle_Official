@@ -14,12 +14,12 @@ function _:New(object)
 end
 
 _.ImgRootPath	= "img/"
-_.SpritePath	= "img/sprite/"
+_.SpritePath	= "img/gem03/"
 _.UIPath		= "img/ui/"
 
 _.ButtonName = { "Regenerate", "Play back", "Load Image" }
 _.ScreenRatioSwitchButtonName = { "16:9", "4:3" }
-_.GemName = { "gem_red.png", "gem_blue.png", "gem_green.png", "gem_orange.png", "gem_purple.png", "gem_pink.png" }
+_.GemName = { "gem_01.png", "gem_02.png", "gem_03.png", "gem_04.png", "gem_05.png", "gem_06.png" }
 _.Color = { "red", "blue", "green", "orange", "purple", "pink" }
 _.ColorIdxArr = { 1, 2, 3, 4, 5, 6 }
 
